@@ -1,0 +1,166 @@
+think about how to propagate the a factor between flats
+new: \Delta f a f_1 - f_2
+
+
+write analysis of bias frames -- bias subtract, standard deviation, log the standard
+do std for all bias frames
+combine all bias frames and find std for that combo (should be 1/sqrt(10))
+
+bias & overscan subtract all flats. For each series of 5, pick one and take ratio of all other 4
+Calculate what the ratio is for ^ (to find a value for each)
+Do for the four sets of flats
+
+work on lsst pipeline
+^ do this before figuring out the a factor
+
+
+Software to measure full width at half max brightness
+    Way of characterizing image quality
+    Heat map across the whole field to see how the lens varies along its surface
+
+
+
+
+try messing with diff parameters
+show fwhm for diff stars
+    The overlapping ones are where the same star has been pulled out as "0th, 1st, 2nd, etc." brightest star
+    Finding peak in sources gives less overlapping stars, but not always the same star as "0th brightest"
+    Still tightly-ish packed
+    See screenshots
+formatting for observatory use
+
+double iter
+    much better consistency in psf_fwhm
+    had to let sigma be free param tho
+    single star compare graphs look similarish
+    See html tables
+
+
+
+
+# fwhm(Path('C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-05-12/raw-reduced/NGC_3587_V/d1057_red.fits'))
+# Path('C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-05-12/raw-reduced/PG1323-085_V')
+# Path('C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-05-12/raw-reduced/PG1323-085_V/d1079_red.fits')
+directories = [Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-reduced/PG1530+057_{filt}') for filt in ['B', 'V', 'R', 'I']]
+
+
+# Initial configuration
+# directories = [Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-reduced/PG1530+057_{filt}') for filt in ['B', 'V', 'R', 'I']]
+# Night 1 mod
+# directories = [Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-reduced/109_231_{filt}') for filt in ['R']]
+
+NOTES FOR NIGHT #2
+- Scientific approach to changing spacers?
+    - Take images of same standard field every time, same bands, same # of exposures, etc
+    - Take multiple star fields? Dither?
+- FWHM decreased slightly after Night 1 spacer change (1 std)
+    - Too few images for case 2--only 4, in one band
+    - FWHM changes significantly w/ default_fwhm, but similar relationship between before/after spacer change?
+- 0.04% (4 stds) change in plate scale between Night 1 original & new spacers
+    - (decrease in arcsec/pixel)
+- Reduction issues
+    - One set of images has weird stripey patterns unaccounted for by flats
+    - Bias seems to have shifted? 
+        - Far right in reduced images goes from darker to lighter after spacer change.
+        - Shouldn't be a darker/lighter area at all
+        - 06-24 images 1039 and d1040 don't have  aright brightness band change
+    - Some 05-12 data isn't being fully flatted out
+        - Unsure if this is new issue or old
+        - d1071 area
+
+
+Things to Try
+- column clipped average graph of from left to right of bright/dark band
+    - normalize by image avg (clipped)
+    - 1 per image or combine
+    - check bias and flats too
+    - range betweeen the curve up/ curve down at the right
+
+|- try masking instead of yanking columns in fwhm
+
+- try giving astrometry just the top 20 brightest stars (use own source drtection)
+
+|- fwhm variation over the field
+    - 2D plot annotated w FWHM at each position
+    - extra fancy: matplotlib? delauney? triangulation can map out the fwhm change over position
+    |- see change w spacers -- figure out where best focus is
+
+|- plot inaccuracy of astrometry.net using read_fits_table of corr.fits
+    |- Compare field_x, index_x
+    |- Graph diff in x, diff in y separately
+    |- Field graph of variations?
+
+- july 30 possible other day if need more/diff observatory
+
+
+TO DO 7/2/24
+
+|- Masked images for astrometry.net?
+
+- For astrometric & FWHM:
+    |- Treat each item individually
+    |- Smoothing Loess function
+    skip- Compare 2 images of the same field
+    skip- Alternatively, just look at the same star over time (do this for maybe 5 brightest stars)
+
+|- FWHM specifically
+    |- Change FWHM measurement to arcsec (using plate scale?)
+    |- plot sqrt(fwhm^2 - fwhm_min^2) instead of just fwhm
+
+|- Ignore low-weighted stars in astrometric
+
+|- Fix error bars on FWHM plot
+
+PRIORITY
+- Subtract out always the same star (approx min on avg over the 4 images)
+
+|- Re-run all astro.net solves, now with "masking" to see if error improves
+
+|- Graph the two nominals separating on FWHM vs spacer width graph
+
+|- look at vignetteing -- [Not visibly noticeable]
+
+|- Check out the 06/24 data (nominal and minus)
+
+|- Stack stars & look at profile
+    |- Scikit-image to help align centers? / projecting one image/psf onto another
+    |- Plot flux vs radius, one for each spacer (on same graph/figure)
+    |- look at x vs y psf diffs
+    |- Looking at individual PSF fits for ellipticity, etc.
+
+|- symlink -- [doesn't work if modules imported contain their own relative imports]
+
+NEXT BIG STEP
+- Measure sensitivty
+    - Brightness of darkest object measurable per unit time
+    - Brae minimum signal/noise = 3
+    - Can use stars we know well (in terms of flux)
+    - Or use all stars in the field, which requires changing counts to flux
+
+- Simulations
+    - Inject stars of known magnitude into image, run pipeline, and see if you can still see it?
+
+
+
+|- Try separating by B/R bands
+|- Read least squares docs
+|- Pixel field graph of what orientation & ellipticity look like
+|- Thresholding out bright and dim stars
+    |- Adding min_separation to DAOStarfinder doesn't make a difference except making runtime long
+
+|- plot stars on top of field graph
+|- If fit is almost circular, just set phi = 0
+|- If gamma1 is less than gamma2, might need to rotate phi by 90 deg?
+- try plotting arrows ins tead of ellipses (wind)
+
+- Separate source plots
+- Plot image in background
+
+- Question-- how to handle constantly passing lots of arguments to other functions?
+- Abstract?
+- Move git stuff online
+
+- DOCUMENTATION
+
+- GOogle doc with plots & their analysis
+

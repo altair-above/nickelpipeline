@@ -1,0 +1,14 @@
+{
+
+    "python.analysis.exclude": [
+        "./test-data-05-12",
+        "./test-data-06-24",
+        "./test-data-06-26",
+        "./psf_analysis/proc_files",
+        "./psf_analysis/original_code",
+        "./psf_analysis/graphs",
+        "./fwhm_analysis/graphs",
+        "./astrometry/graphs",
+        // "./bin_stats_analysis",
+    ]
+}
