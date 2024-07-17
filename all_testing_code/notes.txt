@@ -162,7 +162,7 @@ NEXT BIG STEP
 
 - DOCUMENTATION
 
-|- GOogle doc with plots & their analysis
+|- Google doc with plots & their analysis
 
 pip install -e .
 ^ the -e pulls directly from the repository, instead of installing a static copy in site-packages

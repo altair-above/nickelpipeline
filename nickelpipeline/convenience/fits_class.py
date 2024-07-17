@@ -11,22 +11,30 @@ class Fits_Simple:
     A simple class to handle FITS files.
 
     Attributes:
-        path (str): The file path to the FITS image.
+        path (Path): The file path to the FITS image.
         filename (str): The name of the FITS file.
-        header: The header information of the FITS file.
-        data: The data contained in the FITS file.
+        header (Header): The header information of the FITS file.
+        data (ndarray): The data contained in the FITS file.
         object (str): The object name from the FITS header.
         filtnam (str): The filter name from the FITS header.
         exptime (float): The exposure time from the FITS header.
     """
     
     def __new__(cls, *args, **kwargs):
+        """
+        Returns an existing instance if the first argument is a Fits_Simple instance,
+        otherwise creates a new instance.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            Fits_Simple: An instance of the Fits_Simple class.
+        """
         if args and isinstance(args[0], cls):
-            # If the first argument is an instance of Fits_Simple, return it directly
             return args[0]
-        # Otherwise, create a new instance
         return super(Fits_Simple, cls).__new__(cls)
-    
     
     def __init__(self, image_path: Union[str, Path]):
         """
@@ -37,28 +45,30 @@ class Fits_Simple:
         """
         if isinstance(image_path, Fits_Simple):
             return
-            # self = Fits_Simple(image_path.path)
         else:
             image_path = Path(image_path)
             self.path = image_path
-            self.filename: Path = image_path.stem
+            self.filename = image_path.stem
         
             with fits.open(image_path) as hdu:
                 self.header = hdu[0].header
                 self.data = hdu[0].data
             
             self.image_num = int(self.filename[2:5])
-            self.object: str = self.header["OBJECT"]
-            self.filtnam: str = self.header["FILTNAM"]
-            self.exptime: float = self.header["EXPTIME"]
+            self.object = self.header["OBJECT"]
+            self.filtnam = self.header["FILTNAM"]
+            self.exptime = self.header["EXPTIME"]
             
             # Mask for Nickel images (masking bad columns and blind corners)
             columns_to_mask = [255, 256, 783, 784, 1002]
-            triangles_to_mask = []#[((0, 960), (64, 1024), (0, 1024)), ((0, 33), (34, 0), (0,0))]
+            triangles_to_mask = [] #[((0, 960), (64, 1024)), ((0, 33), (34, 0))]
+            rectangles_to_mask = [((0,960), (64, 1024)), ((0,0), (34, 33))]
 
-            self.masked_array = add_mask(self.data, columns_to_mask, triangles_to_mask)
+            self.masked_array_cols_only = add_mask(self.data, columns_to_mask, 
+                                                   triangles_to_mask, [])
+            self.masked_array = add_mask(self.data, columns_to_mask, triangles_to_mask,
+                                         rectangles_to_mask)
             self.mask = self.masked_array.mask
-            
     
     def __str__(self) -> str:
         """
@@ -69,13 +79,14 @@ class Fits_Simple:
         """
         return f"{self.filename} ({self.object} - {self.filtnam})"
 
-    def display(self, header=False, data=False):
-        """Prints HDU List info, HDU header, and data
+    def display(self, header: bool = False, data: bool = False):
+        """
+        Displays the FITS image and optionally prints the header and data.
 
         Args:
-            image_path (str): path to fits image (greyscale only)
+            header (bool): Whether to print the header information. Defaults to False.
+            data (bool): Whether to print the data. Defaults to False.
         """
-
         with fits.open(self.path) as hdul:
             if header:
                 print("HDU List Info:")
@@ -87,39 +98,40 @@ class Fits_Simple:
             
             plt.figure(figsize=(8, 6))
             plt.imshow(hdul[0].data, origin='lower')
-            # Set the DPI (dots per inch) for the figure
             plt.gcf().set_dpi(300)
-
-            # Display the plot
             plt.colorbar()
             plt.show()
 
 
-
-def add_mask(data, columns_to_mask, triangles_to_mask):
+def add_mask(data: np.ndarray, columns_to_mask: list, triangles_to_mask: list, rectangles_to_mask: list) -> ma.MaskedArray:
     """
-    Create a masked array with specified columns and triangular regions masked.
-    
-    Parameters:
-    - shape: Tuple representing the shape of the array (rows, columns).
-    - columns_to_mask: List of column indices to mask.
-    - triangles_to_mask: List of tuples representing triangles to mask.
-      Each triangle is defined by a tuple of two points (each point is a tuple of (row, column)).
-      
+    Create a masked array with specified columns and regions masked.
+
+    Args:
+        data (np.ndarray): The data to be masked.
+        columns_to_mask (list): List of column indices to mask.
+        triangles_to_mask (list): List of tuples representing triangles to mask.
+        rectangles_to_mask (list): List of tuples representing rectangles to mask.
+
     Returns:
-    - masked_array: A numpy masked array with specified regions masked.
+        ma.MaskedArray: A masked array with specified regions masked.
     """
     rows, cols = data.shape
     mask = np.zeros((rows, cols), dtype=bool)
+    # mask = mask.T
+    
+    for rectangle in rectangles_to_mask:
+        mask[rectangle[0][0]:rectangle[1][0],
+             rectangle[0][1]:rectangle[1][1]] = True
+    mask = mask.T
 
     # Mask the specified columns
     for col in columns_to_mask:
         mask[:, col] = True
-    
+        
     # Mask the specified triangular regions
     for triangle in triangles_to_mask:
-        (r0, c0), (r1, c1), (r2, c2) = triangle
-        
+        (r0, c0), (r1, c1) = triangle
         for r in range(rows):
             for c in range(cols):
                 # Use line equation to determine if point (r, c) is inside the triangle
@@ -129,7 +141,5 @@ def add_mask(data, columns_to_mask, triangles_to_mask):
     
     # Create the masked array
     masked_array = ma.masked_array(data, mask)
-    
     return masked_array
-
 

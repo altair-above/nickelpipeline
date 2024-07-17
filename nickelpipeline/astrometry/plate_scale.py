@@ -4,13 +4,14 @@ from astrometry_api import run_astrometry
 import re
 from matplotlib import pyplot as plt
 
-import os
-import sys
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-sys.path.append(parent_dir)
-# from convenience_funcs.fits_convenience_class import Fits_Simple
-from convenience_funcs.all_funcs import Fits_Simple, unzip_directories, categories_from_conditions
+# import os
+# import sys
+# current_dir = os.path.dirname(os.path.abspath(__file__))
+# parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+# sys.path.append(parent_dir)
+# # from convenience_funcs.fits_convenience_class import Fits_Simple
+from nickelpipeline.convenience.fits_class import Fits_Simple
+from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 
 
 def testing():
@@ -30,9 +31,9 @@ def testing():
     # # Night 1 mod
     # directories = [Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-reduced/109_231_{filt}') for filt in ['R']]
 
-    reddir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-26/raw-reduced/')
-    directories = [dir for dir in reddir.iterdir() if ('Focus' not in str(dir) and 'NGC' not in str(dir))]
-    graph_plate_scale_by_setting(directories, condition_tuples=conditions_06_26, fast=True)
+    # reddir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-26/raw-reduced/')
+    # directories = [dir for dir in reddir.iterdir() if ('Focus' not in str(dir) and 'NGC' not in str(dir))]
+    # graph_plate_scale_by_setting(directories, condition_tuples=conditions_06_26, fast=True)
     return
 
 
@@ -139,12 +140,3 @@ def graph_plate_scale_by_setting(directories, condition_tuples, files=None, fast
 
     return data
     
-conditions_06_26 = [
-                    (1.625, (22, 31)),
-                    (1.625, (88, 105)),
-                    (1.875, (33, 42)),
-                    (2.625, (43, 53)),
-                    (3.375, (54, 64)),
-                    (1.375, (65, 74))
-                   ]
-
