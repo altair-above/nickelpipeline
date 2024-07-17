@@ -163,10 +163,17 @@ cython_debug/
 # test-data-05-12/log.txt
 # test-data-06-24/log.txt
 # test-data-06-26/log.txt
-test-data-05-12
-test-data-06-24
-test-data-06-26
-psf_analysis_moffat/proc_files
-psf_analysis_moffat/graphs
+# test-data-05-12
+# test-data-06-24
+# test-data-06-26
+# psf_analysis_moffat/proc_files
+# psf_analysis_moffat/graphs
 __pycache__
 old_git
+
+all_testing_code/test-data-05-12
+all_testing_code/test-data-06-24
+all_testing_code/test-data-06-26
+all_testing_code/test_code/psf_analysis/moffat/proc_files
+all_testing_code/graphs
+all_testing_code/old_code
