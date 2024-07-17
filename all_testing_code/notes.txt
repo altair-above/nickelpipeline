@@ -166,3 +166,7 @@ NEXT BIG STEP
 
 pip install -e .
 ^ the -e pulls directly from the repository, instead of installing a static copy in site-packages
+
+- Make sure astrometry.net is still working 😭
+
+

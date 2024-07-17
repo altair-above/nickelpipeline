@@ -17,15 +17,9 @@ from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats import SigmaClip
 
 from reduction_mod_basic import process_single
+from nickelpipeline.convenience.fits_class import Fits_Simple
+from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 
-
-import os
-import sys
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-# grandparent_dir = os.path.abspath(os.path.join(parent_dir, os.pardir))
-sys.path.append(parent_dir)
-from convenience_funcs.all_funcs import *
 # from astrometry.plate_scale import avg_plate_scale
 
 
@@ -60,10 +54,7 @@ def testing():
     # bias, flat = generate_reduction_files(rawdir)
     # fwhm = fwhm_from_raw(image_to_analyze, bias, flat)
 
-default_fwhm_default=5.0
-thresh_default=15
-aper_size_default=8
-local_bkg_range_default=(15,20)
+
 
 
 def plot_sources(f, img, x, y, given_fwhm, ofile=None):
@@ -79,9 +70,13 @@ def plot_sources(f, img, x, y, given_fwhm, ofile=None):
     plt.show()
 
 
-def calc_fwhm(image, mode='psf', plot=False, default_fwhm=default_fwhm_default, thresh=thresh_default,
-         aper_size=aper_size_default, local_bkg_range=local_bkg_range_default,
-         which_source=None, verbose=True):
+def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
+    
+    default_fwhm=5.0
+    thresh=15
+    aper_size=8
+    local_bkg_range=(15,20)
+    
     if not isinstance(image, Fits_Simple):
         image = Fits_Simple(image)
     
@@ -197,7 +192,7 @@ def calc_fwhm(image, mode='psf', plot=False, default_fwhm=default_fwhm_default, 
         plot_sources(image, img, phot_data['x_fit'][indx], phot_data['y_fit'][indx],fwhm)
     
     #----------------------------------------------------------------------
-    # Testing AperatureStats
+    # AperatureStats Analysis
     #----------------------------------------------------------------------
     if mode == 'aper':
         coordinates = list(zip(phot_data['x_fit'][indx], phot_data['y_fit'][indx]))

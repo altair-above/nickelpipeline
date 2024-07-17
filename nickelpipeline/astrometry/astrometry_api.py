@@ -43,16 +43,12 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
                 calibrated_fits_paths.append(output_path)
         return calibrated_fits_paths
     
-    
-    
-    
     # Makes output folder if it doesn't already exist
     os.makedirs(output_dir, exist_ok=True)
     
     # Modify images to remove the Nickel Telescope's bad columns
     mod_dir = os.path.join(os.path.dirname(output_dir), 'raw-astro-input')   # Directory for modified images
-    if not os.path.exists(mod_dir):
-        os.makedirs(mod_dir)
+    os.makedirs(mod_dir, exist_ok=True)
     columns_to_modify = [255, 256, 783, 784, 1002]
 
     mod_paths = []
@@ -71,7 +67,7 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
     # Log in to Nova and get session key
     R = requests.post(
         "http://nova.astrometry.net/api/login",
-        data={"request-json": json.dumps({"apikey": "nhvozkuehegpwybk"})},  # API key can be found in your account -- currently using Allison's
+        data={"request-json": json.dumps({"apikey": "fknqiifdlhjliedf"})},  # API key can be found in your account -- currently using Allison's
     )
     dictionary = json.loads(R.text)
     session_key = dictionary["session"]
@@ -89,6 +85,9 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
         R = requests.post(url, files=files, data=data)
         dictionary = json.loads(R.text)
         subid = dictionary['subid']
+        
+        # print(dictionary)
+        # jobid = dictionary["jobs"][0]
 
         # Get jobid from submission status
         # Requires checking every 5 sec & waiting until requests.post actually returns something
@@ -101,6 +100,7 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
             url = f"http://nova.astrometry.net/api/submissions/{subid}"
             R = requests.post(url)
             dictionary = json.loads(R.text)
+            print(dictionary)
             try:
                 jobid = dictionary["jobs"][0]
                 if jobid is None:
@@ -183,7 +183,7 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
             except:
                 print(f"***Connection Error(?) encountered; skipping this image***")
                 time.sleep(15)
-        os.remove(image_path)
+        # os.remove(image_path)
     return calibrated_fits_paths
 
 # image2 = run_astrometry('C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-reduced/PG1530+057_V/d1035_red.fits', 'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-astrometric')[0]

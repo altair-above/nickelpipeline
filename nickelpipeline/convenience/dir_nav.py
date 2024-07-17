@@ -24,12 +24,13 @@ def categories_from_conditions(condition_tuples: list, images: list) -> dict:
     return categories
 
 
-def unzip_directories(directories: list, files: list = None, output_format: str = 'Fits_Simple') -> list:
+def unzip_directories(path_list: list, files: list = None, output_format: str = 'Fits_Simple', allow_exceptions: bool = False) -> list:
     """
-    Unzips directories and returns a list of image objects.
+    Unzips a list of directories/files to access all files inside 
+    and returns a list of image objects.
 
     Args:
-        directories (Union[str, list]): Directories to unzip.
+        path_list (list): List of paths to unzip.
         files (list, optional): List of files to unzip. Defaults to None.
         output_format (str, optional): The format of the output objects. Defaults to 'Fits_Simple'.
 
@@ -43,58 +44,21 @@ def unzip_directories(directories: list, files: list = None, output_format: str 
     
     if files is not None:
         images = [output(file) for file in files]
-        # print("'files' parameter is not ideal. 'directories' handles lists that contain both directories & files")
+        print("'files' parameter is not ideal. 'directories' handles lists that contain both directories & files")
     else:
         images = []
-        for elem_path in directories:
+        for elem_path in path_list:
             elem_path = Path(elem_path)
             if elem_path.is_dir():
-                images += [output(file) for file in elem_path.iterdir()]
-            else:
+                if allow_exceptions:
+                    for file in Path(elem_path).iterdir():
+                        try:
+                            images.append(Fits_Simple(file))
+                        except (KeyError, OSError):
+                            continue
+                else:
+                    images += [output(file) for file in elem_path.iterdir()]
+            elif elem_path.is_file():
                 images.append(output(elem_path))
     return images
 
-
-# def unzip_directories(directories: Union[str, list], files: list = None, output_format: str = 'Fits_Simple') -> list:
-#     """
-#     Unzips directories and returns a list of image objects.
-
-#     Args:
-#         directories (Union[str, list]): Directories to unzip.
-#         files (list, optional): List of files to unzip. Defaults to None.
-#         output_format (str, optional): The format of the output objects. Defaults to 'Fits_Simple'.
-
-#     Returns:
-#         list: List of image objects.
-#     """
-#     if output_format == 'Path':
-#         output = Path
-#     elif output_format == 'Fits_Simple':
-#         output = Fits_Simple
-    
-#     if files is not None:
-#         images = [output(file) for file in files]
-#     else:
-#         if not isinstance(directories, list):
-#             directories = [directories]
-#         images = []
-#         for dir in directories:
-#             images += [output(file) for file in Path(dir).iterdir()]
-#     return images
-
-
-
-conditions_06_26 = [(1.375, (65, 74)),
-                    (1.624, (22, 31)),
-                    (1.625, (88, 105)),
-                    (1.875, (33, 42)),
-                    (2.625, (43, 53)),
-                    (3.375, (54, 64)),
-                    ]
-
-conditions_06_24 = [(1.375, (53, 60)),
-                    (1.625, (1, 52)),
-                    (1.625, (88, 105))
-                    ]
-
-conditions = {'06-26': conditions_06_26, '06-24': conditions_06_24}

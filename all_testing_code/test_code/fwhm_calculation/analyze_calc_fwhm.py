@@ -29,7 +29,7 @@ import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 sys.path.append(parent_dir)
-from convenience_funcs.convenience_funcs import Fits_Simple
+from nickelpipeline.convenience.fits_class import Fits_Simple
 
 default_fwhm_default=8.0
 thresh_default=35
