@@ -30,20 +30,19 @@ fwhm_label = 'FWHM (pix)'
 ecc_label = 'FWHM Eccentricity'
 phi_label = 'Rotation Angle Phi'
 
-def graph_psf_pars_bulk(directories, condition_tuples, files=None, verbose=False):
+def graph_psf_pars_bulk(path_list, condition_tuples, verbose=False):
     """
     Plot PSF parameters relative to category conditions (i.e. camera displacement 
     from tub). All source PSFs in all images within a category are stacked before 
     fitting a Moffat function. Parameters are extracted from this fit.
 
     Args:
-        directories (list of Path): List of directories containing image files.
+        path_list (list): List of paths (directories or files) to unzip.
         condition_tuples (tuple): Conditions for categorizing images.
-        files (list): Files to process. Alternative to directories--default is None.
         verbose (bool): If True, print detailed output during processing.
     """
     # Gather files from all directories, sort into dict = {spacer_width: file_list}
-    images = unzip_directories(directories, files, output_format='Fits_Simple')
+    images = unzip_directories(path_list, output_format='Fits_Simple')
     categories = categories_from_conditions(condition_tuples, images)
     
     # Fit PSFs & extract parameters
@@ -60,20 +59,20 @@ def graph_psf_pars_bulk(directories, condition_tuples, files=None, verbose=False
                    xlabel=spacer_label, ylabel=label, 
                    title=f'{label} vs. {spacer_label}')
 
-def graph_psf_pars_many(directories, condition_tuples, files=None, verbose=False):
+def graph_psf_pars_many(path_list, condition_tuples, verbose=False):
     """
     Plot PSF parameters relative to category conditions (i.e. camera displacement 
     from tub). All source PSFs in an image are stacked before fitting a Moffat 
     function. Parameters are extracted from these fits and averaged for graphing.
 
     Args:
-        directories (list): List of directories containing image files.
+        path_list (list): List of paths (directories or files) to unzip.
         condition_tuples (tuple): Conditions for categorizing images.
         files (list): Files to process. Alternative to directories--default is None.
         verbose (bool): If True, print detailed output during processing.
     """
     # Gather files from all directories, sort into dict = {spacer_width: file_list}
-    images = unzip_directories(directories, files, output_format='Fits_Simple')
+    images = unzip_directories(path_list, output_format='Fits_Simple')
     categories = categories_from_conditions(condition_tuples, images)
     
     # Initialize lists
@@ -118,18 +117,17 @@ def graph_psf_pars_many(directories, condition_tuples, files=None, verbose=False
                    title=f'{label} vs. {spacer_label}', 
                    legend_label=f'{label} w/ {0.95*100}% Conf. Interval')
 
-def graph_psf_pars_individuals(directories, files=None, verbose=False):
+def graph_psf_pars_individuals(path_list, verbose=False):
     """
     Plot PSF parameters for every image. All source PSFs in an image are stacked before 
     fitting a Moffat function. Parameters are extracted from this fits.
 
     Args:
-        directories (list): List of directories containing image files.
-        files (list): Files to process. Alternative to directories--default is None.
+        path_list (list): List of paths (directories or files) to unzip.
         verbose (bool): If True, print detailed output during processing.
     """
     # Extract images from directories or specific files, converting to 'Fits_Simple' format
-    images = unzip_directories(directories, files, output_format='Fits_Simple')
+    images = unzip_directories(path_list, output_format='Fits_Simple')
     
     # Fit PSFs and extract parameters for each image
     results = [(image.image_num,) + extract_psf_par([image,], image.path.stem, verbose=verbose)

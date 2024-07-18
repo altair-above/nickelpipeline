@@ -15,6 +15,7 @@ from nickelpipeline.psf_analysis.moffat.fit_psf import fit_psf_single
 from nickelpipeline.psf_analysis.moffat.model_psf import FitEllipticalMoffat2D, FitMoffat2D, make_ellipse
 
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
+from nickelpipeline.convenience.graphs import smooth_contour, scatter_sources
 from nickelpipeline.astrometry.nickel_data import plate_scale_approx    # For the Nickel Telescope original camera
 
 
@@ -99,8 +100,112 @@ def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False,
 
         plt.show()
 
-def param_contour_by_category(param_type, path_list, condition_tuples,
-                              frac=0.5, verbose=False, include_smooth=True, include_srcs=False):
+
+# def param_contour_by_category(param_type, path_list, condition_tuples,
+#                               frac=0.5, verbose=False, include_smooth=True, include_srcs=False):
+#     """
+#     Plot contour maps of a Moffat fit parameter (FWHM, eccentricity, rotation angle phi), 
+#     categorized by certain conditions.
+    
+#     Args:
+#         param_type (str): Type of parameter to plot ('fwhm', 'phi', 'ecc').
+#         path_list (list): List of paths (directories or files) to unzip.
+#         condition_tuples (list of tuples): Conditions for categorizing images.
+#         frac (float): Fraction parameter for Loess smoothing.
+#         verbose (bool): If True, print detailed output during processing.
+#         include_smooth (bool): Whether to include smoothed parameter contour graph.
+#         include_srcs (bool): Whether to include source parameter contour graph.
+#     """
+#     # Gather files from all directories, sort into dict = {spacer_width: file_list}
+#     images = unzip_directories(path_list, output_format='Fits_Simple')
+#     categories = categories_from_conditions(condition_tuples, images)
+    
+#     for category, file_list in categories.items():
+        
+#         # Convert float category of form 1.375 to a string 1_375
+#         category_str = f"{str(category)[0]}_{str(category)[2:]}"
+#         if verbose: 
+#             print(f"Working on {param_type} map for category {category}")
+        
+#         # Create a figure for plotting
+#         fig = plt.figure()
+#         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+#         ax.set_xlabel('X (pixels)')
+#         ax.set_ylabel('Y (pixels)')
+        
+#         # Get source coordinates and parameters
+#         source_coords, source_pars, img_nums = get_source_pars(file_list, category_str, verbose)
+
+#         ###########################################
+#         # Plot the smoothed parameter contour graph
+#         ###########################################
+#         if include_smooth:
+#             # Extract source coordinates and parameters
+#             subplot_size=15
+#             centroid_xs, centroid_ys = zip(*source_coords)
+#             centroid_xs = np.array(centroid_xs)
+#             centroid_ys = np.array(centroid_ys)
+            
+#             source_param_list, color_range, title = get_param_list(param_type, source_pars, centroid_xs.shape, img_nums)
+            
+#             # Create a grid for at which to sample the smoothed parameters
+#             border = int(subplot_size / 2)
+#             grid_x, grid_y = np.mgrid[border:1024-border:subplot_size, 
+#                                       border:1024-border:subplot_size]
+            
+#             param_list, _ = loess_2d(centroid_xs, centroid_ys, source_param_list, xnew=grid_x.flatten(),
+#                                         ynew=grid_y.flatten(), frac=frac)
+#             param_list = param_list.reshape(grid_x.shape)
+            
+#             # # Get smoothed parameters
+#             # smooth_pars, grid_x, grid_y = get_smoothed_pars(source_coords, source_pars, frac=frac, 
+#             #                                         subplot_size=15, verbose=verbose)
+    
+#             # # Get parameter list, range of colors, and title for plotting
+#             # param_list, color_range, title = get_param_list(param_type, smooth_pars, grid_x.shape, img_nums)
+            
+#             # Define the colors & range of contour levels
+#             colors = ["#cd0000", "#cb4000", "#c97f00", "#c7bc00", "#91c400", "#52c200", 
+#                     "#00bc62", "#00ba9c", "#009cb8", "#0061b6", "#1100b1", "#4800af", "#7e00ad"]
+#             levels = np.linspace(color_range[0], color_range[1], len(colors))
+
+#             # Create contour plot
+#             cp = ax.contourf(grid_x, grid_y, param_list, levels=levels, colors=colors)
+#             ax.set_title(f'{title} Graph - {category_str}')
+        
+#         ##############################
+#         # Plot the sources' parameters
+#         ##############################
+#         if include_srcs:
+#             if verbose: 
+#                 print(f"Working on sources plot for category {category}")
+            
+#             # Extract coordinates and parameter list
+#             x, y = zip(*source_coords)
+#             x = np.array(x)
+#             y = np.array(y)
+#             param_list, color_range, title = get_param_list(param_type, source_pars, x.shape, img_nums)
+
+#             # Define the colors & range of contour levels
+#             colors = ["#cd0000", "#cb4000", "#c97f00", "#c7bc00", "#91c400", "#52c200", 
+#                       "#00bc62", "#00ba9c", "#009cb8", "#0061b6", "#1100b1", "#4800af"]
+#             levels = np.linspace(color_range[0], color_range[1], len(colors))
+#             cmap_custom = ListedColormap(colors)
+
+#             # Create a scatter plot, color coded by param_list value
+#             ax.set_title(f'{title} Graph - {category_str}')
+#             jitter_x = np.random.normal(scale=6, size=len(x))
+#             jitter_y = np.random.normal(scale=6, size=len(y))
+#             ax.scatter(x+jitter_x, y+jitter_y, s=15, c=param_list, cmap=cmap_custom, 
+#                                 vmin=levels[0], vmax=levels[-1], alpha=1.0,
+#                                 linewidths=0.7, edgecolors='k')
+        
+#         plt.colorbar(cp, ax=ax)
+#         plt.show()
+
+
+def param_graph_by_category(param_type, path_list, condition_tuples, frac=0.5,
+                              verbose=False, include_smooth=True, include_srcs=False):
     """
     Plot contour maps of a Moffat fit parameter (FWHM, eccentricity, rotation angle phi), 
     categorized by certain conditions.
@@ -134,72 +239,33 @@ def param_contour_by_category(param_type, path_list, condition_tuples,
         # Get source coordinates and parameters
         source_coords, source_pars, img_nums = get_source_pars(file_list, category_str, verbose)
 
-        ###########################################
-        # Plot the smoothed parameter contour graph
-        ###########################################
-        if include_smooth:
-            # Extract source coordinates and parameters
-            subplot_size=15
-            centroid_xs, centroid_ys = zip(*source_coords)
-            centroid_xs = np.array(centroid_xs)
-            centroid_ys = np.array(centroid_ys)
-            
-            # Create a grid for at which to sample the smoothed parameters
-            border = int(subplot_size / 2)
-            grid_x, grid_y = np.mgrid[border:1024-border:subplot_size, 
-                                      border:1024-border:subplot_size]
-            
-            source_param_list, color_range, title = get_param_list(param_type, source_pars, centroid_xs.shape, img_nums)
-            
-            param_list, _ = loess_2d(centroid_xs, centroid_ys, source_param_list, xnew=grid_x.flatten(),
-                                        ynew=grid_y.flatten(), frac=frac)
-            param_list = param_list.reshape(grid_x.shape)
-            
-            # # Get smoothed parameters
-            # smooth_pars, grid_x, grid_y = get_smoothed_pars(source_coords, source_pars, frac=frac, 
-            #                                         subplot_size=15, verbose=verbose)
+        # Extract source coordinates and parameters
+        x_list, y_list = zip(*source_coords)
+        x_list = np.array(x_list)
+        y_list = np.array(y_list)
     
-            # # Get parameter list, range of colors, and title for plotting
-            # param_list, color_range, title = get_param_list(param_type, smooth_pars, grid_x.shape, img_nums)
-            
-            # Define the colors & range of contour levels
-            colors = ["#cd0000", "#cb4000", "#c97f00", "#c7bc00", "#91c400", "#52c200", 
-                    "#00bc62", "#00ba9c", "#009cb8", "#0061b6", "#1100b1", "#4800af", "#7e00ad"]
-            levels = np.linspace(color_range[0], color_range[1], len(colors))
+        source_param_list, color_range, title = get_param_list(param_type, source_pars, x_list.shape, img_nums)
 
-            # Create contour plot
-            cp = ax.contourf(grid_x, grid_y, param_list, levels=levels, colors=colors)
-            ax.set_title(f'{title} Graph - {category_str}')
+        # Plot the smoothed parameter contour graph
+        if include_smooth:
+            if verbose: 
+                print(f"Working on smoothed contour plot for category {category}")
+
+            ax, cp = smooth_contour(x_list, y_list, source_param_list, 
+                                    color_range, ax, frac, title, category_str)
         
-        ##############################
         # Plot the sources' parameters
-        ##############################
         if include_srcs:
             if verbose: 
                 print(f"Working on sources plot for category {category}")
-            
-            # Extract coordinates and parameter list
-            x, y = zip(*source_coords)
-            x = np.array(x)
-            y = np.array(y)
-            param_list, color_range, title = get_param_list(param_type, source_pars, x.shape, img_nums)
 
-            # Define the colors & range of contour levels
-            colors = ["#cd0000", "#cb4000", "#c97f00", "#c7bc00", "#91c400", "#52c200", 
-                      "#00bc62", "#00ba9c", "#009cb8", "#0061b6", "#1100b1", "#4800af"]
-            levels = np.linspace(color_range[0], color_range[1], len(colors))
-            cmap_custom = ListedColormap(colors)
-
-            # Create a scatter plot, color coded by param_list value
-            ax.set_title(f'{title} Graph - {category_str}')
-            jitter_x = np.random.normal(scale=6, size=len(x))
-            jitter_y = np.random.normal(scale=6, size=len(y))
-            ax.scatter(x+jitter_x, y+jitter_y, s=15, c=param_list, cmap=cmap_custom, 
-                                vmin=levels[0], vmax=levels[-1], alpha=1.0,
-                                linewidths=0.7, edgecolors='k')
+            ax = scatter_sources(x_list, y_list, source_param_list, 
+                                 color_range, ax, title, category_str)
         
-        plt.colorbar(cp, ax=ax)
+        if cp is not None:
+            plt.colorbar(cp, ax=ax)
         plt.show()
+
 
 def get_param_list(param_type, smooth_pars, shape, img_nums=None):
     """
@@ -220,7 +286,7 @@ def get_param_list(param_type, smooth_pars, shape, img_nums=None):
         # Calculate average FWHM (between semi-major and minor axes)
         param_list = (FitMoffat2D.to_fwhm(smooth_pars[:,3], smooth_pars[:,6]) + 
                       FitMoffat2D.to_fwhm(smooth_pars[:,4], smooth_pars[:,6]))/2 * plate_scale_approx
-        color_range = [1.4, 3.1]    # Optimized for Nickel 06-26-24 data
+        color_range = [1.5, 2.8]    # Optimized for Nickel 06-26-24 data
         title = "FWHM (arcsec)"
     elif param_type == 'fwhm residuals':
         fwhm_list = (FitMoffat2D.to_fwhm(smooth_pars[:,3], smooth_pars[:,6]) + 
@@ -339,7 +405,3 @@ def get_smoothed_pars(source_coords, source_pars, frac=0.5,
     
     return smooth_pars, grid_x, grid_y
 
-
-
-# Suppress warnings
-#warnings.filterwarnings('ignore')

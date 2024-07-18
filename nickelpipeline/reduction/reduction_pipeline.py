@@ -6,18 +6,17 @@ from pathlib import Path
 from nickelpipeline.reduction.overscan_subtraction import overscan_subtraction
 from nickelpipeline.reduction.bias_subtraction import bias_subtraction
 from nickelpipeline.reduction.flat_division import flat_division
-from nickelpipeline.convenience.dir_nav import unzip_directories
 
 
 # Set object type names
-bias_object = 'Bias'
-dome_flat_object = 'Dome flat'
-sky_flat_object = 'Flat'
-dark_object = 'dark'
-focus_object = 'focus'
+bias_label = 'Bias'
+dome_flat_label = 'Dome flat'
+sky_flat_label = 'Flat'
+dark_label = 'dark'
+focus_label = 'focus'
 
 
-def process_all(rawdir):
+def reduce_all(rawdir):
     
     if not isinstance(rawdir, Path):
         rawdir = Path(rawdir)
@@ -37,6 +36,7 @@ def process_all(rawdir):
     overscan_files = [overscan_dir / (file.stem + "_over" + file.suffix) for file in rawfiles]
     
     overscan_subtraction(rawfiles, overscan_files, 'yes')
+    print(f"Overscan subtracted images saved to {overscan_dir}")
 
     obj_list = []
     exptime_list = []
@@ -58,7 +58,7 @@ def process_all(rawdir):
     print("Performing bias subtraction")
     
     # gather all the bias frames
-    biasfiles = list(df_log.file[df_log.object == bias_object])
+    biasfiles = list(df_log.file[df_log.object == bias_label])
 
     # average all of them into one
     biasdata = []
@@ -75,20 +75,21 @@ def process_all(rawdir):
     # gather all non-bias files in a subdirectory of processing
     nonbias_dir = procdir / 'unbias'
     Path.mkdir(nonbias_dir, exist_ok=True)
-    nonbias_files_input = list(df_log.file[df_log.object != bias_object])
+    nonbias_files_input = list(df_log.file[df_log.object != bias_label])
     nonbias_files_output = [nonbias_dir / (file.stem.split('_')[0] + "_unbias" + file.suffix) for file in nonbias_files_input]
 
     bias_subtraction(nonbias_files_input, nonbias_files_output, bias)
+    print(f"Bias subtracted images saved to {nonbias_dir}")
 
     df_log["file"] = [nonbias_dir / (file.stem.split('_')[0] + "_unbias" + file.suffix) for file in df_log["file"]]
     
     print("Performing flat division")
     
     # use sky flats if available, use dome flats if not
-    if sky_flat_object in list(set(obj_list)):
-        flattype = sky_flat_object
+    if sky_flat_label in list(set(obj_list)):
+        flattype = sky_flat_label
     else:
-        flattype = dome_flat_object
+        flattype = dome_flat_label
         
     flatfilts = list(set(df_log.filt[df_log.object == flattype]))
     
@@ -98,11 +99,11 @@ def process_all(rawdir):
         # find all the files with this filter
         flatfiles = list(df_log.file[(df_log.object == flattype) & (df_log.filt == flatfilt)])
         
-        scienceobjects = list(set(df_log.object[(df_log.object != bias_object) &
-                                                (df_log.object != dark_object) &
-                                                (df_log.object != dome_flat_object) &
-                                                (df_log.object != sky_flat_object) &
-                                                (df_log.object != focus_object) &
+        scienceobjects = list(set(df_log.object[(df_log.object != bias_label) &
+                                                (df_log.object != dark_label) &
+                                                (df_log.object != dome_flat_label) &
+                                                (df_log.object != sky_flat_label) &
+                                                (df_log.object != focus_label) &
                                                 (df_log.filt == flatfilt)]))
         
         # calculate the average flat frame
@@ -134,6 +135,7 @@ def process_all(rawdir):
                 if len(sciencefiles) > 0:
                     flat_division(sciencefiles, redfiles, flat)
 
+    print(f"Flat divided images saved to {reddir}")
     return all_red_files
 
 

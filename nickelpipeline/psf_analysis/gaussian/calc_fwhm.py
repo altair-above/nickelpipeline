@@ -204,43 +204,44 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
         aper_fwhm_median = np.nanmedian(aper_fwhm)
         aper_fwhm_std = np.nanstd(aper_fwhm)
 
+    # (psf_fwhm_median, aper_fwhm_median, psf_fwhm_std, aper_fwhm_std)
+    all_fwhms = np.array(phot_data['sigma_fit'][indx])*sig2fwhm
+    all_x = np.array(phot_data['x_fit'][indx])
+    all_y = np.array(phot_data['y_fit'][indx])
+    # Create a SigmaClip object and apply it to get a mask
+    sigma_clip = SigmaClip(sigma=3, maxiters=5)
+    masked_fwhms = sigma_clip(all_fwhms)
+
+    # Apply the mask to the original data
+    clipped_x = np.array(all_x)[~masked_fwhms.mask]
+    clipped_y = np.array(all_y)[~masked_fwhms.mask]
+    clipped_fwhms = np.array(all_fwhms)[~masked_fwhms.mask]
+    
+    if verbose:
+        print("Number of sources removed =", len(all_x) - len(clipped_x))
+        print(clipped_fwhms)
+        print("min_fwhm = ", min_fwhm)
+        print(fwhm_residuals)
+    
     #----------------------------------------------------------------------
     # Return
     #----------------------------------------------------------------------
-    # (psf_fwhm_median, aper_fwhm_median, psf_fwhm_std, aper_fwhm_std)
     if mode == 'psf':
         return psf_fwhm_median, psf_fwhm_std
     elif mode == 'aper':
         return aper_fwhm_median
-    elif mode == 'all fwhms':
-        return phot_data['sigma_fit'][indx]*sig2fwhm, psf_fwhm_std
+    elif mode == 'fwhms, std':
+        return all_fwhms, psf_fwhm_std
+    elif mode == 'fwhm':
+        return clipped_x, clipped_y, clipped_fwhms
     elif mode == 'fwhm residuals':
-        all_fwhms = np.array(phot_data['sigma_fit'][indx])*sig2fwhm
-        all_x = np.array(phot_data['x_fit'][indx])
-        all_y = np.array(phot_data['y_fit'][indx])
-        
-        # Create a SigmaClip object and apply it to get a mask
-        sigma_clip = SigmaClip(sigma=3, maxiters=5)
-        masked_fwhms = sigma_clip(all_fwhms)
-
-        # Apply the mask to the original data
-        clipped_x = np.array(all_x)[~masked_fwhms.mask]
-        clipped_y = np.array(all_y)[~masked_fwhms.mask]
-        clipped_fwhms = np.array(all_fwhms)[~masked_fwhms.mask]
-        
         # Calculate the residuals wrt the minimum FWHM
         # Approximating "removing" the atmospheric FWHM, leaving (mostly) the telescopic
         min_fwhm = np.min(clipped_fwhms)
         fwhm_residuals = np.sqrt(clipped_fwhms**2 - min_fwhm**2)
-        if verbose:
-            print("Number of sources removed =", len(all_x) - len(clipped_x))
-            print(clipped_fwhms)
-            print("min_fwhm = ", min_fwhm)
-            print(fwhm_residuals)
-        
         return (clipped_x, clipped_y, fwhm_residuals)
     else:
-        return "mode must = 'psf', 'aper', 'all fwhms', or 'fwhm coords'"
+        raise ValueError("mode must = 'psf', 'aper', 'fwhm', 'fwhms, std', or 'fwhm coords'")
 
 
 def fwhm_from_raw(image, bias, flat):

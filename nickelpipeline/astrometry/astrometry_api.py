@@ -10,9 +10,6 @@ from astropy.io import fits
 ####################################
 
 
-# image = 'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-reduced/PG1530+057_V/d1035_red.fits'
-# output_dir = 'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-astrometric'
-
 def run_astrometry(image_paths, output_dir, mode='image', fast=False):
     """Runs astrometry.net calibration on all images input, and saves the calibrated
     fits files to output_dir. Uses astrometry.net's API.
@@ -85,9 +82,6 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
         R = requests.post(url, files=files, data=data)
         dictionary = json.loads(R.text)
         subid = dictionary['subid']
-        
-        # print(dictionary)
-        # jobid = dictionary["jobs"][0]
 
         # Get jobid from submission status
         # Requires checking every 5 sec & waiting until requests.post actually returns something
@@ -127,7 +121,7 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
             if data['status'] == 'failed':
                 print('Job failed')
                 return False
-            if t > 30:
+            if t > 45:
                 print('Maximum time elapsed... exiting')
                 return False
             time_check(t, interval)
@@ -180,21 +174,8 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
                 calib_fits = convert(image_path)
                 if calib_fits is not None:
                     calibrated_fits_paths.append(calib_fits)
-            except:
+            except requests.exceptions.ConnectionError:
                 print(f"***Connection Error(?) encountered; skipping this image***")
                 time.sleep(15)
         # os.remove(image_path)
     return calibrated_fits_paths
-
-# image2 = run_astrometry('C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-reduced/PG1530+057_V/d1035_red.fits', 'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-astrometric')[0]
-
-# For if run_astrometry saves bad/un-processed files
-
-# astrdir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-26/astrometric')
-# for image in astrdir.iterdir():
-#     try:
-#         with fits.open(image) as hdul:
-#             hdu = hdul[0]
-#     except OSError:
-#         print(f"deleting {image}")
-#         image.unlink()

@@ -10,17 +10,6 @@ from nickelpipeline.astrometry.astrometry_api import run_astrometry
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 
 
-# from ..convenience_funcs.fits_convenience_class import Fits_Simple
-
-# import os
-# import sys
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-# sys.path.append(parent_dir)
-# # from convenience_funcs.fits_convenience_class import Fits_Simple
-# from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
-
-
 def graph_topographic(path_list, condition_tuples, error_type='error',
                       fit_type='loess', frac=0.3, fast=False):
     

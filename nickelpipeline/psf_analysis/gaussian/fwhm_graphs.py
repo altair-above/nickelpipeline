@@ -53,7 +53,7 @@ def graph_fwhms_by_setting(path_list, condition_tuples):
     conf_intervals = []
     # Print out the categories and their corresponding file lists
     for category, file_list in categories.items():
-        mean_fwhm, result_matrix = batch_fwhm(file_list, mode='all fwhms')
+        mean_fwhm, result_matrix = batch_fwhm(file_list, mode='fwhms, std')
         data.append((category, mean_fwhm))
 
         image_numbers, fwhms, stds, objects = zip(*result_matrix)
@@ -100,7 +100,7 @@ def multi_date_graph_fwhms_by_setting(path_dict, condition_tuples_dict):
         subdata = []
         # Print out the categories and their corresponding file lists
         for category, file_list in categories.items():
-            mean_fwhm, result_matrix = batch_fwhm(file_list, mode='all fwhms')
+            mean_fwhm, result_matrix = batch_fwhm(file_list, mode='fwhms, std')
             data.append((category, mean_fwhm))
             subdata.append((category, mean_fwhm))
             image_numbers, fwhms, stds, objects = zip(*result_matrix)
