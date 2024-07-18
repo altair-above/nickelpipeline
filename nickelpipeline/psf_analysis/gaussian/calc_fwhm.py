@@ -204,6 +204,9 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
         aper_fwhm_median = np.nanmedian(aper_fwhm)
         aper_fwhm_std = np.nanstd(aper_fwhm)
 
+    #----------------------------------------------------------------------
+    # Sigma Clip PSF FWHMs
+    #----------------------------------------------------------------------
     # (psf_fwhm_median, aper_fwhm_median, psf_fwhm_std, aper_fwhm_std)
     all_fwhms = np.array(phot_data['sigma_fit'][indx])*sig2fwhm
     all_x = np.array(phot_data['x_fit'][indx])

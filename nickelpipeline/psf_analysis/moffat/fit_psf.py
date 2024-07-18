@@ -11,6 +11,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from astropy.io import fits
 from astropy.modeling.functional_models import Moffat1D
 from astropy.visualization import AsinhStretch, ZScaleInterval, ImageNormalize
+from astropy.stats import SigmaClip
 
 from nickelpipeline.psf_analysis.moffat.model_psf import FitEllipticalMoffat2D, FitMoffat2D, make_ellipse
 
@@ -146,7 +147,30 @@ def fit_psf_generic(mode, category_str, num_images, ofile=None, verbose=False):
         return fit
     
     elif mode == 'single':
-        return np.array(centroid_coords), np.array(fit_pars), np.array(source_images)
+        # Eliminate sources with irregular FWHMs
+        fit_pars = np.array(fit_pars)
+        source_images = np.array(source_images)
+        centroid_coords = np.array(centroid_coords)
+        fwhm1 = FitMoffat2D.to_fwhm(fit_pars[:,3], fit_pars[:,6]) 
+        
+        # Create a SigmaClip object and apply it to get a mask
+        sigma_clip = SigmaClip(sigma=4, maxiters=5)
+        masked_fwhm1 = sigma_clip(fwhm1)
+        clipped_fit_pars = fit_pars[~masked_fwhm1.mask]
+        clipped_coords = centroid_coords[~masked_fwhm1.mask]
+        clipped_source_images = source_images[~masked_fwhm1.mask]
+        
+        fwhm2 = FitMoffat2D.to_fwhm(clipped_fit_pars[:,4], clipped_fit_pars[:,6])
+        masked_fwhm2 = sigma_clip(fwhm2)
+        clipped_fit_pars = clipped_fit_pars[~masked_fwhm2.mask]
+        clipped_coords = clipped_coords[~masked_fwhm2.mask]
+        clipped_source_images = clipped_source_images[~masked_fwhm2.mask]
+        
+        if verbose:
+            print("Number of sources removed =", len(fit_pars) - len(clipped_fit_pars))
+            print("Number of sources remaining =", len(clipped_fit_pars))
+        
+        return clipped_coords, clipped_fit_pars, clipped_source_images
 
 
 def psf_plot(plot_file, fit, verbose=False):

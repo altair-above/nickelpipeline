@@ -14,9 +14,11 @@ directories = [dir for dir in reddir.iterdir() if ('Focus' not in str(dir) and '
 
 # Fit field by category and plot parameter contours for different parameters
 # fit_field_by_category(directories, conditions_06_26, verbose=verbose, include_srcs=True)
-param_graph_by_category('fwhm', directories, conditions_06_26, verbose=verbose, include_srcs=True)
+# param_graph_by_category('fwhm', directories, conditions_06_26, verbose=verbose, include_srcs=True)
 # param_graph_by_category('ecc', directories, conditions_06_26, verbose=verbose, include_srcs=True)
 # param_graph_by_category('phi', directories, conditions_06_26, verbose=verbose, include_srcs=True)
+param_graph_by_category('fwhm residuals', directories, conditions_06_26, verbose=verbose, include_srcs=True)
+
 
 # reddir_05 = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-05-12/reduced/')
 # directories = [dir for dir in reddir_05.iterdir() if 'flat' not in str(dir)]
