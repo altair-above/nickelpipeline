@@ -1,13 +1,9 @@
-from IPython import embed
-
-# fwhm(Path('C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-05-12/raw-reduced/NGC_3587_V/d1057_red.fits'))
 
 import numpy as np
 from matplotlib import pyplot
 
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
-from astropy.visualization import AsinhStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.visualization import SqrtStretch
@@ -24,11 +20,6 @@ from astropy.table import Table
 import warnings
 from matplotlib import pyplot as plt
 
-import os
-import sys
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-sys.path.append(parent_dir)
 from nickelpipeline.convenience.fits_class import Fits_Simple
 
 default_fwhm_default=8.0

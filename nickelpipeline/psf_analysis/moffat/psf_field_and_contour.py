@@ -10,48 +10,15 @@ from pathlib import Path
 
 from loess.loess_2d import loess_2d
 
-from model_psf import FitEllipticalMoffat2D, FitMoffat2D, make_ellipse
-from stamps import generate_stamps_bulk
-from fit_psf import fit_psf_single
+from nickelpipeline.psf_analysis.moffat.stamps import generate_stamps_bulk
+from nickelpipeline.psf_analysis.moffat.fit_psf import fit_psf_single
+from nickelpipeline.psf_analysis.moffat.model_psf import FitEllipticalMoffat2D, FitMoffat2D, make_ellipse
 
-import os
-import sys
-
-# Add the parent directory to the system path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-sys.path.append(parent_dir)
-
-from convenience_funcs.all_funcs import (
-    unzip_directories, categories_from_conditions, 
-    conditions_06_26, conditions_06_24
-)
-
-plate_scale = 0.371     # For the Nickel Telescope original camera
-
-def testing(verbose=True):
-    """
-    Run a series of tests on PSF fitting and parameter contour plotting.
-    
-    Args:
-        verbose (bool): If True, print detailed output during processing.
-    """
-    # Define the path to the directory containing raw reduced data
-    reddir = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-26/raw-reduced/')
-    
-    # Filter directories to exclude those containing 'Focus' and 'NGC' in their names
-    directories = [dir for dir in reddir.iterdir() if ('Focus' not in str(dir) and 'NGC' not in str(dir))]
-    
-    # Fit field by category and plot parameter contours for different parameters
-    fit_field_by_category(directories, conditions_06_26, verbose=verbose, include_srcs=True)
-    param_contour_by_category('fwhm', directories, conditions_06_26, verbose=verbose, include_srcs=True)
-    param_contour_by_category('ecc', directories, conditions_06_26, verbose=verbose, include_srcs=True)
-    param_contour_by_category('phi', directories, conditions_06_26, verbose=verbose, include_srcs=True)
-    
-    return
+from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
+from nickelpipeline.astrometry.nickel_data import plate_scale_approx    # For the Nickel Telescope original camera
 
 
-def fit_field_by_category(directories, condition_tuples, files=None, frac=0.5, verbose=False, 
+def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False, 
                           subplot_size=70, include_smooth=True, include_srcs=False):
     """
     Display plots of PSF Moffat fit models as they vary across a CCD field, categorized
@@ -59,9 +26,8 @@ def fit_field_by_category(directories, condition_tuples, files=None, frac=0.5, v
     of points. Can also display the actual source fits.
     
     Args:
-        directories (list): List of directories containing image files.
+        path_list (list): List of paths (directories or files) to unzip.
         condition_tuples (list of tuples): Conditions for categorizing images.
-        files (list): Files to process. Alternative to directories--default is None.
         frac (float): Fraction parameter for Loess smoothing. [0.2, 0.8] is typical.
         verbose (bool): If True, print detailed output during processing.
         subplot_size (int): Size of the area sampled for one PSF fit.
@@ -69,7 +35,7 @@ def fit_field_by_category(directories, condition_tuples, files=None, frac=0.5, v
         include_srcs (bool): Whether to include source fit field map.
     """
     # Gather files from all directories, sort into dict = {spacer_width: file_list}
-    images = unzip_directories(directories, files, output_format='Fits_Simple')
+    images = unzip_directories(path_list, output_format='Fits_Simple')
     categories = categories_from_conditions(condition_tuples, images)
     
     for category, file_list in categories.items():
@@ -87,7 +53,7 @@ def fit_field_by_category(directories, condition_tuples, files=None, frac=0.5, v
         plt.suptitle(f"Moffat Fits for Spacer Width {category}")
         
         # Get source coordinates and parameters
-        source_coords, source_pars, img_nums = get_source_pars(None, file_list, 
+        source_coords, source_pars, img_nums = get_source_pars(file_list, 
                                                      category_str, verbose)
         
         #################################
@@ -133,7 +99,7 @@ def fit_field_by_category(directories, condition_tuples, files=None, frac=0.5, v
 
         plt.show()
 
-def param_contour_by_category(param_type, directories, condition_tuples, files=None, 
+def param_contour_by_category(param_type, path_list, condition_tuples,
                               frac=0.5, verbose=False, include_smooth=True, include_srcs=False):
     """
     Plot contour maps of a Moffat fit parameter (FWHM, eccentricity, rotation angle phi), 
@@ -141,16 +107,15 @@ def param_contour_by_category(param_type, directories, condition_tuples, files=N
     
     Args:
         param_type (str): Type of parameter to plot ('fwhm', 'phi', 'ecc').
-        directories (list): List of directories containing image files.
+        path_list (list): List of paths (directories or files) to unzip.
         condition_tuples (list of tuples): Conditions for categorizing images.
-        files (list): Files to process. Alternative to directories--default is None.
         frac (float): Fraction parameter for Loess smoothing.
         verbose (bool): If True, print detailed output during processing.
         include_smooth (bool): Whether to include smoothed parameter contour graph.
         include_srcs (bool): Whether to include source parameter contour graph.
     """
     # Gather files from all directories, sort into dict = {spacer_width: file_list}
-    images = unzip_directories(directories, files, output_format='Fits_Simple')
+    images = unzip_directories(path_list, output_format='Fits_Simple')
     categories = categories_from_conditions(condition_tuples, images)
     
     for category, file_list in categories.items():
@@ -167,7 +132,7 @@ def param_contour_by_category(param_type, directories, condition_tuples, files=N
         ax.set_ylabel('Y (pixels)')
         
         # Get source coordinates and parameters
-        source_coords, source_pars, img_nums = get_source_pars(None, file_list, category_str, verbose)
+        source_coords, source_pars, img_nums = get_source_pars(file_list, category_str, verbose)
 
         ###########################################
         # Plot the smoothed parameter contour graph
@@ -182,13 +147,13 @@ def param_contour_by_category(param_type, directories, condition_tuples, files=N
             # Create a grid for at which to sample the smoothed parameters
             border = int(subplot_size / 2)
             grid_x, grid_y = np.mgrid[border:1024-border:subplot_size, 
-                                    border:1024-border:subplot_size]
+                                      border:1024-border:subplot_size]
             
             source_param_list, color_range, title = get_param_list(param_type, source_pars, centroid_xs.shape, img_nums)
             
             param_list, _ = loess_2d(centroid_xs, centroid_ys, source_param_list, xnew=grid_x.flatten(),
                                         ynew=grid_y.flatten(), frac=frac)
-            param_list.reshape(grid_x.shape)
+            param_list = param_list.reshape(grid_x.shape)
             
             # # Get smoothed parameters
             # smooth_pars, grid_x, grid_y = get_smoothed_pars(source_coords, source_pars, frac=frac, 
@@ -254,7 +219,7 @@ def get_param_list(param_type, smooth_pars, shape, img_nums=None):
     if param_type == 'fwhm':
         # Calculate average FWHM (between semi-major and minor axes)
         param_list = (FitMoffat2D.to_fwhm(smooth_pars[:,3], smooth_pars[:,6]) + 
-                      FitMoffat2D.to_fwhm(smooth_pars[:,4], smooth_pars[:,6]))/2 * plate_scale
+                      FitMoffat2D.to_fwhm(smooth_pars[:,4], smooth_pars[:,6]))/2 * plate_scale_approx
         color_range = [1.4, 3.1]    # Optimized for Nickel 06-26-24 data
         title = "FWHM (arcsec)"
     elif param_type == 'fwhm residuals':
@@ -263,7 +228,7 @@ def get_param_list(param_type, smooth_pars, shape, img_nums=None):
         print(len(fwhm_list))
         num_imgs = img_nums[-1]
         mins = [np.min(fwhm_list[img_nums==i]) for i in range(num_imgs)]
-        param_list = np.array([mins[i] for i in img_nums]) * plate_scale
+        param_list = np.array([mins[i] for i in img_nums]) * plate_scale_approx
         color_range = [0.0, 1.5]
         title = "FWHM Residuals (arcsec)"
     elif param_type == 'phi':
@@ -280,7 +245,7 @@ def get_param_list(param_type, smooth_pars, shape, img_nums=None):
             fwhm2 = FitMoffat2D.to_fwhm(smooth_par[4], smooth_par[6])
             param_list.append(np.sqrt(np.abs(fwhm1**2 - fwhm2**2)) / max(fwhm1, fwhm2))
         param_list = np.array(param_list)
-        color_range = [0.0, 0.65]   # Optimized for Nickel 06-26-24 data
+        color_range = [0.29, 0.65]   # Optimized for Nickel 06-26-24 data
         title = "Eccentricity"
     else:
         raise ValueError("Input param_type must be 'fwhm' or 'phi'")
@@ -288,13 +253,12 @@ def get_param_list(param_type, smooth_pars, shape, img_nums=None):
     param_list = param_list.reshape(shape)
     return param_list, color_range, title
 
-def get_source_pars(directories, files=None, category_str=None, verbose=False):
+def get_source_pars(path_list, category_str=None, verbose=False):
     """
     Extract source coordinates and fit parameters from image data.
     
     Args:
-        directories (list): List of directories containing image files.
-        files (list): Files to process. Alternative to directories--default is None.
+        path_list (list): List of paths (directories or files) to unzip.
         category_str (str): Category string for identifying the path to data
         verbose (bool): If True, print detailed output during processing.
     
@@ -304,7 +268,7 @@ def get_source_pars(directories, files=None, category_str=None, verbose=False):
                 (x0, y0, amplitude, gamma1, gamma2, phi, alpha, background)
     """
     # Unzip directories to get image files
-    images = unzip_directories(directories, files, output_format='Path')
+    images = unzip_directories(path_list, output_format='Path')
     
     # Generate stamps (image of sources) for image data
     generate_stamps_bulk(images, category_str, verbose=verbose)
@@ -313,76 +277,6 @@ def get_source_pars(directories, files=None, category_str=None, verbose=False):
     source_coords, source_pars, img_nums = fit_psf_single(category_str, len(images))
     return source_coords, source_pars, img_nums
 
-# def smooth_par(param_type, source_coords, param_list, frac=0.5, verbose=False, subplot_size=70):
-#     """
-#     Apply Loess smoothing to the source parameters and return a grid sampling.
-    
-#     Args:
-#         source_coords (list of tuples): List of source coordinates.
-#         source_pars (ndarray): Array of source parameters.
-#         frac (float): Fraction parameter for Loess smoothing.
-#         verbose (bool): If True, print detailed output during processing.
-#         subplot_size (int): Size of the subplot.
-    
-#     Returns:
-#         smooth_pars (ndarray): Smoothed parameters.
-#                 (x0, y0, amplitude, gamma1, gamma2, phi, alpha, background)
-#         grid_x (ndarray): Grid x-coordinates.
-#         grid_y (ndarray): Grid y-coordinates.
-#     """
-#     # Extract source coordinates and parameters
-#     centroid_xs, centroid_ys = zip(*source_coords)
-    
-#     # Create a grid for at which to sample the smoothed parameters
-#     border = int(subplot_size / 2)
-#     grid_x, grid_y = np.mgrid[border:1024-border:subplot_size, 
-#                               border:1024-border:subplot_size]
-    
-#     smooth_list, _ = loess_2d(centroid_xs, centroid_ys, param_list, xnew=grid_x.flatten(),
-#                                   ynew=grid_y.flatten(), frac=frac)
-    
-    
-    
-    
-#     # Extract source coordinates and parameters
-    
-#     xs, ys, amplitudes, gamma1s, gamma2s, phis, alphas, backgrounds = zip(*source_pars)
-#     # Convert phis to nice phi (angle between semi-major axis & +x-axis, degrees)
-    
-    
-#     # Take average for unimportant parameters instead of smoothing
-#     avg_amplitude = np.mean(amplitudes)
-#     avg_alpha = np.mean(alphas)
-#     avg_background = np.mean(backgrounds)
-
-#     # Convert lists to NumPy arrays
-#     (centroid_xs, centroid_ys, 
-#      gamma1s, gamma2s, phis) = [np.array(lst) for lst in [centroid_xs, centroid_ys, 
-#                                                           gamma1s, gamma2s, phis]]
-    
-    
-    
-#     if verbose: 
-#         print(f"{len(source_pars)} stars being used for Loess")
-    
-#     # Apply Loess smoothing
-#     smooth_gamma1s, _ = loess_2d(centroid_xs, centroid_ys, gamma1s, xnew=grid_x.flatten(),
-#                                   ynew=grid_y.flatten(), frac=frac)
-#     smooth_gamma2s, _ = loess_2d(centroid_xs, centroid_ys, gamma2s, xnew=grid_x.flatten(),
-#                                   ynew=grid_y.flatten(), frac=frac)
-#     smooth_phis, _ = loess_2d(centroid_xs, centroid_ys, phis, xnew=grid_x.flatten(),
-#                                   ynew=grid_y.flatten(), frac=frac)
-#     smooth_phis = [FitEllipticalMoffat2D.get_orig_phi(gamma1, gamma2, phi) 
-#                    for gamma1, gamma2, phi in zip(smooth_gamma1s, smooth_gamma2s, smooth_phis)]
-    
-#     # Combine smoothed parameters into FitEllipticalMoffat2D's self.par format
-#     smooth_pars = np.array([
-#         [x, y, avg_amplitude, g1, g2, phi, avg_alpha, avg_background]
-#         for x, y, g1, g2, phi in zip(grid_x.flatten(), grid_y.flatten(), 
-#                                      smooth_gamma1s, smooth_gamma2s, smooth_phis)
-#     ])
-    
-#     return smooth_pars, grid_x, grid_y
 
 def get_smoothed_pars(source_coords, source_pars, frac=0.5,
                       verbose=False, subplot_size=70):

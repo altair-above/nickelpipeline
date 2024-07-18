@@ -16,7 +16,7 @@ from astropy.visualization import ZScaleInterval
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats import SigmaClip
 
-from reduction_mod_basic import process_single
+from nickelpipeline.reduction.reduction_mod_basic import process_single
 from nickelpipeline.convenience.fits_class import Fits_Simple
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 
@@ -251,8 +251,8 @@ def fwhm_from_raw(image, bias, flat):
     return fwhm
 
 
-def batch_fwhm(directories, files=None, plot=False, max_std=0.5, mode='psf'):
-    images = unzip_directories(directories, files, output_format='Fits_Simple')
+def batch_fwhm(path_list, plot=False, max_std=0.5, mode='psf'):
+    images = unzip_directories(path_list, output_format='Fits_Simple')
     
     fwhms = []
     stds = []

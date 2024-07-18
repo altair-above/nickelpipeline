@@ -27,11 +27,6 @@ from astropy.table import Table
 import warnings
 from matplotlib import pyplot as plt
 
-import os
-import sys
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-sys.path.append(parent_dir)
 from nickelpipeline.convenience.fits_class import Fits_Simple
 
 default_fwhm_default=8.0

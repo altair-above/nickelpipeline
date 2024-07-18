@@ -10,14 +10,14 @@ from nickelpipeline.convenience.dir_nav import categories_from_conditions, unzip
 from nickelpipeline.astrometry.nickel_data import plate_scale_approx   # For the Nickel Telescope original science camera
 
 
-def graph_fwhms_by_image(directories, date=None, files=None, plot=False, max_std=0.5):
-    avg, data = batch_fwhm(directories, plot=plot, files=files, max_std=max_std)
+def graph_fwhms_by_image(path_list, date=None, plot=False, max_std=0.5):
+    avg, data = batch_fwhm(path_list, plot=plot, max_std=max_std)
     data.sort()
     image_numbers, fwhms, stds, objects = zip(*data)
     unique_objects = list(OrderedDict.fromkeys(objects))
     if date is None:
         print("Date in title may be inaccurate")
-        date = directories[0].parent.parent.name[-5:]
+        date = path_list[0].parent.parent.name[-5:]
 
     # Plot the values relative to image numbers, with different colors for different objects
     plt.figure(figsize=(10, 6))
@@ -43,9 +43,9 @@ def graph_fwhms_by_image(directories, date=None, files=None, plot=False, max_std
     return avg
 
 
-def graph_fwhms_by_setting(directories, condition_tuples, files=None):
+def graph_fwhms_by_setting(path_list, condition_tuples):
     
-    images = unzip_directories(directories, files, output_format='Fits_Simple')
+    images = unzip_directories(path_list, output_format='Fits_Simple')
     
     categories = categories_from_conditions(condition_tuples, images)
     
@@ -53,7 +53,7 @@ def graph_fwhms_by_setting(directories, condition_tuples, files=None):
     conf_intervals = []
     # Print out the categories and their corresponding file lists
     for category, file_list in categories.items():
-        mean_fwhm, result_matrix = batch_fwhm(None, files=file_list, mode='all fwhms')
+        mean_fwhm, result_matrix = batch_fwhm(file_list, mode='all fwhms')
         data.append((category, mean_fwhm))
 
         image_numbers, fwhms, stds, objects = zip(*result_matrix)
@@ -85,7 +85,7 @@ def graph_fwhms_by_setting(directories, condition_tuples, files=None):
 
     return data
 
-def multi_date_graph_fwhms_by_setting(directories_dict, condition_tuples_dict, files=None):
+def multi_date_graph_fwhms_by_setting(path_dict, condition_tuples_dict):
     # directories_dict is of the form {'06-26': directories (list), '06-24': directories (list)}
     # Same for condition_tuples_dict
     data = []
@@ -93,14 +93,14 @@ def multi_date_graph_fwhms_by_setting(directories_dict, condition_tuples_dict, f
     
     plt.figure(figsize=(8, 5))
     
-    for date, directories in directories_dict.items():
-        images = unzip_directories(directories, files, output_format='Fits_Simple')
+    for date, path_list in path_dict.items():
+        images = unzip_directories(path_list, output_format='Fits_Simple')
         categories = categories_from_conditions(condition_tuples_dict[date], images)
         
         subdata = []
         # Print out the categories and their corresponding file lists
         for category, file_list in categories.items():
-            mean_fwhm, result_matrix = batch_fwhm(None, files=file_list, mode='all fwhms')
+            mean_fwhm, result_matrix = batch_fwhm(file_list, mode='all fwhms')
             data.append((category, mean_fwhm))
             subdata.append((category, mean_fwhm))
             image_numbers, fwhms, stds, objects = zip(*result_matrix)

@@ -8,16 +8,10 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 from scipy import stats
 
-from stamps import generate_stamps_bulk
-from fit_psf import fit_psf_stack, psf_plot
+from nickelpipeline.psf_analysis.moffat.stamps import generate_stamps_bulk
+from nickelpipeline.psf_analysis.moffat.fit_psf import fit_psf_stack, psf_plot
 
-import os
-import sys
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-sys.path.append(parent_dir)
-from convenience_funcs.all_funcs import (categories_from_conditions, unzip_directories, 
-                                         conditions_06_26, conditions_06_24)
+from nickelpipeline.convenience.dir_nav import categories_from_conditions, unzip_directories
 
 
 # Example of conditions:
@@ -29,26 +23,6 @@ from convenience_funcs.all_funcs import (categories_from_conditions, unzip_direc
 #                     (3.375, (54, 64)),
 #                     ]
 
-
-def testing(verbose=True):
-    """
-    Run a series of tests on PSF fitting and parameter plotting.
-
-    Args:
-        verbose (bool): If True, print detailed output during processing.
-    """
-    reddir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-26/raw-reduced/')
-    
-    # Filter directories to exclude those containing 'Focus' and 'NGC' in their names
-    directories = [dir for dir in reddir.iterdir() 
-                   if ('NGC' not in str(dir) and 'Focus' not in str(dir))]
-    
-    # Analyze PSF parameters in bulk, many, and individual categories
-    graph_psf_pars_bulk(directories, conditions_06_26, verbose=verbose)
-    graph_psf_pars_many(directories, conditions_06_26, verbose=verbose)
-    graph_psf_pars_individuals(directories, verbose=verbose)
-
-    return
 
 # Labels for plotting
 spacer_label = 'Spacer Width (in)'
