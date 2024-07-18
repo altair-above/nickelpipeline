@@ -2,6 +2,7 @@ import numpy as np
 from pathlib import Path
 import warnings
 from matplotlib import pyplot as plt
+from matplotlib import cm
 from loess.loess_2d import loess_2d
 
 from nickelpipeline.psf_analysis.gaussian.calc_fwhm import calc_fwhm
@@ -56,17 +57,17 @@ plate_scale_approx = 0.37   # For the Nickel Telescope
     
 
 def param_graph_by_category(param_type, path_list, condition_tuples, frac=0.3, 
-                              verbose=False, include_smooth=True, include_srcs=False):
+                            verbose=False, include_smooth=True, include_srcs=False):
     
     images = unzip_directories(path_list, output_format='Fits_Simple')
     categories = categories_from_conditions(condition_tuples, images)
     
     for category, file_list in categories.items():
         single_param_graph(param_type, file_list, str(category), frac, 
-                             verbose, include_smooth, include_srcs)
+                           verbose, include_smooth, include_srcs)
 
 def param_graph_individuals(param_type, path_list, condition_tuples, frac=0.5, 
-                              verbose=False, include_smooth=True, include_srcs=False):
+                            verbose=False, include_smooth=True, include_srcs=False):
     
     images = unzip_directories(path_list, output_format='Fits_Simple')
     categories = categories_from_conditions(condition_tuples, images)
@@ -81,7 +82,7 @@ def param_graph_individuals(param_type, path_list, condition_tuples, frac=0.5,
 
 
 def single_param_graph(param_type, path_list, category_str="", frac=0.3,
-                         verbose=False, include_smooth=True, include_srcs=False):
+                        verbose=False, include_smooth=True, include_srcs=False):
     
     images = unzip_directories(path_list, output_format='Fits_Simple')
     
@@ -95,7 +96,7 @@ def single_param_graph(param_type, path_list, category_str="", frac=0.3,
         color_range = [1.5, 2.8]    # Optimized for Nickel 06-26-24 data
         title = "FWHM (arcsec)"
     elif param_type == 'fwhm residuals':
-        color_range = [0.0, 1.5]    # Optimized for Nickel 06-26-24 data
+        color_range = [0.0, 1.2]    # Optimized for Nickel 06-26-24 data
         title = "FWHM Residuals (arcsec)"
     
     # Collect all coordinates and FWHMs in numpy arrays
@@ -114,10 +115,12 @@ def single_param_graph(param_type, path_list, category_str="", frac=0.3,
     if include_srcs:
         if verbose: 
             print(f"Working on sources plot for category {category_str}")
-        ax = scatter_sources(x_list, y_list, param_list, 
+        ax, cmap = scatter_sources(x_list, y_list, param_list, 
                              color_range, ax, title, category_str)
     
-    if cp is not None:
+    try:
         plt.colorbar(cp, ax=ax)
+    except (UnboundLocalError, RuntimeError):
+        plt.colorbar(cm.ScalarMappable(cmap=cmap), ax=ax)
     plt.show()
 

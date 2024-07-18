@@ -122,7 +122,10 @@ def fit_psf_generic(mode, category_str, num_images, ofile=None, verbose=False):
                                np.amax(stamp_img[i]), gamma, gamma, 0.0,
                                alpha, 0.0])
                 fit = fit_type(stamp_img)  # Initialize fit object
-                fit.fit(p0=p0)  # Perform the fit
+                try:
+                    fit.fit(p0=p0)  # Perform the fit
+                except ValueError:
+                    continue
                 fit_par = fit.par  # Get the fit parameters
                 
                 # Find centroid coordinates

@@ -5,6 +5,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from pathlib import Path
 
 from loess.loess_2d import loess_2d
@@ -41,7 +42,7 @@ def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False,
     for category, file_list in categories.items():
         
         # Convert float category of form 1.375 to a string 1_375
-        category_str = f"{str(category)[0]}_{str(category)[2:]}"
+        category_str = str(category).replace('.', '_')
         if verbose: 
             print(f"Working on fit map for category {category}")
         
@@ -53,19 +54,18 @@ def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False,
         plt.suptitle(f"Moffat Fits for Spacer Width {category}")
         
         # Get source coordinates and parameters
-        source_coords, source_pars, img_nums = get_source_pars(file_list, 
-                                                     category_str, verbose)
+        source_coords, source_pars, _ = get_source_pars(file_list, category_str, verbose)
         
-        #################################
+        #------------------------------------------------------------
         # Plot the smoothed fit field map
-        #################################
+        #------------------------------------------------------------
         if include_smooth:
+            if verbose: 
+                print("Starting smoothed fit field map plotting")
             # Get smoothed parameters
             smooth_pars, _, _ = get_smoothed_pars(source_coords, source_pars, frac=frac,
                                                   subplot_size=subplot_size, verbose=verbose)
-            if verbose: 
-                print("Starting smoothed fit field map plotting")
-
+            
             # Plots ellipses representing the estimated fit at points on a grid
             for smooth_par in smooth_pars:
                 # Calculate FWHM and plot ellipse
@@ -78,10 +78,9 @@ def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False,
                 
                 ax.plot(ell_x, ell_y, color='g', lw=2, label='Smoothed Fit')
         
-        #################################
+        #------------------------------------------------------------
         # Plot the sources' fit field map
-        #################################
-        
+        #------------------------------------------------------------
         if include_srcs:
             if verbose: 
                 print(f"Working on sources plot for category {category}")
@@ -100,8 +99,74 @@ def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False,
         plt.show()
 
 
+# def param_graph_by_category(param_type, path_list, condition_tuples, frac=0.5,
+#                             verbose=False, include_smooth=True, include_srcs=False):
+#     """
+#     Plot contour maps of a Moffat fit parameter (FWHM, eccentricity, rotation angle phi), 
+#     categorized by certain conditions.
+    
+#     Args:
+#         param_type (str): Type of parameter to plot ('fwhm', 'phi', 'ecc').
+#         path_list (list): List of paths (directories or files) to unzip.
+#         condition_tuples (list of tuples): Conditions for categorizing images.
+#         frac (float): Fraction parameter for Loess smoothing.
+#         verbose (bool): If True, print detailed output during processing.
+#         include_smooth (bool): Whether to include smoothed parameter contour graph.
+#         include_srcs (bool): Whether to include source parameter contour graph.
+#     """
+#     # Gather files from all directories, sort into dict = {spacer_width: file_list}
+#     images = unzip_directories(path_list, output_format='Fits_Simple')
+#     categories = categories_from_conditions(condition_tuples, images)
+    
+#     for category, file_list in categories.items():
+#         if verbose: 
+#             print(f"Working on {param_type} map for category {category}")
+        
+#         # Convert float category of form 1.375 to a string 1_375
+#         category_str = str(category).replace('.', '_')
+        
+#         # Create a figure for plotting
+#         fig = plt.figure()
+#         ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+#         ax.set_xlabel('X (pixels)')
+#         ax.set_ylabel('Y (pixels)')
+        
+#         # Get source coordinates and parameters
+#         source_coords, source_pars, img_nums = get_source_pars(file_list, category_str, verbose)
+        
+#         # Extract source coordinates and parameters
+#         x_list, y_list = zip(*source_coords)
+#         x_list = np.array(x_list)
+#         y_list = np.array(y_list)
+    
+#         source_param_list, color_range, title = get_param_list(param_type, source_pars, x_list.shape, img_nums)
+
+#         #------------------------------------------------------------
+#         # Plot the smoothed parameter contour graph
+#         #------------------------------------------------------------
+#         if include_smooth:
+#             if verbose: 
+#                 print(f"Working on smoothed contour plot for category {category}")
+#             ax, cp = smooth_contour(x_list, y_list, source_param_list, 
+#                                     color_range, ax, frac, title, category_str)
+#         #------------------------------------------------------------
+#         # Plot the sources' parameters
+#         #------------------------------------------------------------
+#         if include_srcs:
+#             if verbose: 
+#                 print(f"Working on sources plot for category {category}")
+#             ax, cmap = scatter_sources(x_list, y_list, source_param_list, 
+#                                  color_range, ax, title, category_str)
+        
+#         try:
+#             plt.colorbar(cp, ax=ax)
+#         except (UnboundLocalError, RuntimeError):
+#             plt.colorbar(cm.ScalarMappable(cmap=cmap), ax=ax)
+#         plt.show()
+
+
 def param_graph_by_category(param_type, path_list, condition_tuples, frac=0.5,
-                              verbose=False, include_smooth=True, include_srcs=False):
+                            verbose=False, include_smooth=True, include_srcs=False):
     """
     Plot contour maps of a Moffat fit parameter (FWHM, eccentricity, rotation angle phi), 
     categorized by certain conditions.
@@ -120,44 +185,81 @@ def param_graph_by_category(param_type, path_list, condition_tuples, frac=0.5,
     categories = categories_from_conditions(condition_tuples, images)
     
     for category, file_list in categories.items():
-        if verbose: 
-            print(f"Working on {param_type} map for category {category}")
-        
-        # Convert float category of form 1.375 to a string 1_375
-        category_str = f"{str(category)[0]}_{str(category)[2:]}"
-        
-        # Create a figure for plotting
-        fig = plt.figure()
-        ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        ax.set_xlabel('X (pixels)')
-        ax.set_ylabel('Y (pixels)')
-        
-        # Get source coordinates and parameters
-        source_coords, source_pars, img_nums = get_source_pars(file_list, category_str, verbose)
-        
-        # Extract source coordinates and parameters
-        x_list, y_list = zip(*source_coords)
-        x_list = np.array(x_list)
-        y_list = np.array(y_list)
-    
-        source_param_list, color_range, title = get_param_list(param_type, source_pars, x_list.shape, img_nums)
+        single_param_graph(param_type, file_list, category, frac, verbose, 
+                           include_smooth, include_srcs)
 
-        # Plot the smoothed parameter contour graph
-        if include_smooth:
-            if verbose: 
-                print(f"Working on smoothed contour plot for category {category}")
-            ax, cp = smooth_contour(x_list, y_list, source_param_list, 
-                                    color_range, ax, frac, title, category_str)
-        # Plot the sources' parameters
-        if include_srcs:
-            if verbose: 
-                print(f"Working on sources plot for category {category}")
-            ax = scatter_sources(x_list, y_list, source_param_list, 
-                                 color_range, ax, title, category_str)
-        
-        if cp is not None:
-            plt.colorbar(cp, ax=ax)
-        plt.show()
+
+def param_graph_individuals(param_type, path_list, condition_tuples, frac=0.5, 
+                            verbose=False, include_smooth=True, include_srcs=False):
+    
+    images = unzip_directories(path_list, output_format='Fits_Simple')
+    categories = categories_from_conditions(condition_tuples, images)
+    
+    for category, file_list in categories.items():
+        print(f"Category: {category}")
+        for image in file_list:
+            print(f"Image {image}:")
+            single_param_graph(param_type, [image], str(category), frac, 
+                                 verbose, include_smooth, include_srcs)
+        print("------------------")
+
+
+def single_param_graph(param_type, file_list, category, frac=0.5,
+                       verbose=False, include_smooth=True, include_srcs=False):
+    """
+    Plot contour maps of a Moffat fit parameter (FWHM, eccentricity, rotation angle phi), 
+    categorized by certain conditions.
+    
+    Args:
+        param_type (str): Type of parameter to plot ('fwhm', 'phi', 'ecc').
+        file_list (list): List of Fits_Simple images to graph.
+        category (any): Category of images.
+        frac (float): Fraction parameter for Loess smoothing.
+        verbose (bool): If True, print detailed output during processing.
+        include_smooth (bool): Whether to include smoothed parameter contour graph.
+        include_srcs (bool): Whether to include source parameter contour graph.
+    """
+    if verbose: 
+        print(f"Working on {param_type} map for category {category}")
+    
+    # Convert float category of form 1.375 to a string 1_375
+    category_str = str(category).replace('.', '_')
+    
+    # Create a figure for plotting
+    fig = plt.figure()
+    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    ax.set_xlabel('X (pixels)')
+    ax.set_ylabel('Y (pixels)')
+    
+    # Get source coordinates and parameters
+    source_coords, source_pars, img_nums = get_source_pars(file_list, category_str, verbose)
+    
+    # Extract source coordinates and parameters
+    x_list, y_list = zip(*source_coords)
+    x_list = np.array(x_list)
+    y_list = np.array(y_list)
+
+    source_param_list, color_range, title = get_param_list(param_type, source_pars, x_list.shape, img_nums)
+
+    # Plot the smoothed parameter contour graph
+    if include_smooth:
+        if verbose: 
+            print(f"Working on smoothed contour plot for category {category}")
+        ax, cp = smooth_contour(x_list, y_list, source_param_list, 
+                                color_range, ax, frac, title, category_str)
+    
+    # Plot the sources' parameters
+    if include_srcs:
+        if verbose: 
+            print(f"Working on sources plot for category {category}")
+        ax, cmap = scatter_sources(x_list, y_list, source_param_list, 
+                                color_range, ax, title, category_str)
+    
+    try:
+        plt.colorbar(cp, ax=ax)
+    except (UnboundLocalError, RuntimeError):
+        plt.colorbar(cm.ScalarMappable(cmap=cmap), ax=ax)
+    plt.show()
 
 
 def get_param_list(param_type, pars, shape, img_nums=None):

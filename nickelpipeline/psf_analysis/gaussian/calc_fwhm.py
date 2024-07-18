@@ -151,12 +151,11 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
                                        names=('x_0', 'y_0', 'flux_0')))
 
     indx = phot_data['iter_detected'] == 1
-    fwhm = np.median(phot_data['sigma_fit'][indx])*sig2fwhm
+    fwhm = np.median(np.abs(phot_data['sigma_fit'][indx]))*sig2fwhm
     
     #----------------------------------------------------------------------
     # Refit using the "improved" FWHM
     #----------------------------------------------------------------------
-
     iraffind = IRAFStarFinder(fwhm=fwhm, threshold=thresh*std,
                               minsep_fwhm=0.1, peakmax=55000)
     grouper = SourceGrouper(min_separation=2*fwhm)

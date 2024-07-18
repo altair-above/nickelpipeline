@@ -10,7 +10,7 @@ from astropy.io import fits
 ####################################
 
 
-def run_astrometry(image_paths, output_dir, mode='image', fast=False):
+def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=True):
     """Runs astrometry.net calibration on all images input, and saves the calibrated
     fits files to output_dir. Uses astrometry.net's API.
 
@@ -29,6 +29,8 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False):
     # If running in fast=True, skip all astrometry.net and only access already-
     # processed images
     if fast:
+        if verbose:
+            print("Astrometric solve running in fast mode: astrometry.net not used, instead using local copies of astrometric solves")
         calibrated_fits_paths = []
         for image_path in image_paths:
             output_path_stem = os.path.basename(image_path)

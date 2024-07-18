@@ -64,8 +64,8 @@ def scatter_sources(data_x, data_y, data_vals, color_range, backgrd_ax=None,
     jitter_x = np.random.normal(scale=7, size=len(data_x))
     jitter_y = np.random.normal(scale=7, size=len(data_y))
     ax.scatter(data_x+jitter_x, data_y+jitter_y, s=15, c=data_vals, cmap=cmap_custom, 
-              vmin=levels[0], vmax=levels[-1], alpha=1.0,
-              linewidths=0.7, edgecolors='k')
+               vmin=levels[0], vmax=levels[-1], alpha=1.0,
+               linewidths=0.7, edgecolors='k')
     
-    return ax
+    return ax, cmap_custom
 

@@ -47,7 +47,7 @@ def graph_psf_pars_bulk(path_list, condition_tuples, verbose=False):
     
     # Fit PSFs & extract parameters
     results = zip(*[(category,) + extract_psf_par(file_list, 
-                                                  f"{str(category)[0]}_{str(category)[2:]}", 
+                                                  str(category).replace('.', '_'), 
                                                   verbose=verbose)
                     for category, file_list in categories.items()])
     widths, fwhms, eccs, phis = results
