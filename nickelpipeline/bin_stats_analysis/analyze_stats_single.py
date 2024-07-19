@@ -190,8 +190,8 @@ def analyze_fits_complete(image, bin_width=50):
     plt.show()
 
 
-image = Path("C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-05-12/raw/d1067.fits")  # Linear + plateau
+# image = Path("C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-05-12/raw/d1067.fits")  # Linear + plateau
 
-analyze_fits(image, bin_width=100)
+# analyze_fits(image, bin_width=100)
 # analyze_fits_complete(image, bin_width=100)
 

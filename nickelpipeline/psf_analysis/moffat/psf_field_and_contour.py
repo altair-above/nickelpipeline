@@ -325,8 +325,7 @@ def get_source_pars(path_list, category_str=None, verbose=False):
     
     Returns:
         source_coords (ndarray): Array of source coordinates.
-        source_pars (ndarray): Array of source parameters.
-                (x0, y0, amplitude, gamma1, gamma2, phi, alpha, background)
+        source_pars (ndarray): Array of source parameters. (x0, y0, amplitude, gamma1, gamma2, phi, alpha, background)
     """
     # Unzip directories to get image files
     images = unzip_directories(path_list, output_format='Path')
@@ -352,8 +351,7 @@ def get_smoothed_pars(source_coords, source_pars, frac=0.5,
         subplot_size (int): Size of the subplot.
     
     Returns:
-        smooth_pars (ndarray): Smoothed parameters.
-                (x0, y0, amplitude, gamma1, gamma2, phi, alpha, background)
+        smooth_pars (ndarray): Smoothed parameters. (x0, y0, amplitude, gamma1, gamma2, phi, alpha, background)
         grid_x (ndarray): Grid x-coordinates.
         grid_y (ndarray): Grid y-coordinates.
     """
