@@ -1,0 +1,18 @@
+
+raw_root = '/Users/westfall/Work/Lick/Nickel/science_camera/obs/test/2022-04-01/raw'
+rdx_root = '/Users/westfall/Work/Lick/Nickel/science_camera/obs/test/2022-04-01/rdx'
+
+[bias]
+    find = 'OBJECT==bias'
+    combine = true
+
+[flat]
+    find = 'OBJECT==flat'
+    group = 'FILTNAM'
+    combine = true
+
+[object]
+    find = 'OBJECT!=bias,OBJECT!=flat'
+    group = 'OBJECT,FILTNAM'
+    combine = false
+

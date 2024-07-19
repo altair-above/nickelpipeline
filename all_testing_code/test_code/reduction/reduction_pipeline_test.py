@@ -6,4 +6,4 @@ rawdir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nicke
 
 redfiles = reduce_all(rawdir)
 
-display_many_nickel(redfiles)
+# display_many_nickel(redfiles)
