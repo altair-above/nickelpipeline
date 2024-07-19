@@ -7,7 +7,7 @@ from astropy.visualization import ZScaleInterval
 from pathlib import Path
 from typing import Union
 
-from nickelpipeline.convenience.nickel_data import bad_columns, bad_triangles, bad_rectangles
+from nickelpipeline.convenience.nickel_data import ccd_shape, bad_columns, bad_triangles, bad_rectangles
 
         
 class Fits_Simple:
@@ -111,9 +111,8 @@ def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_
         tris_to_mask (list): List of tuples of 3 coordinates representing triangles to mask.
         rects_to_mask (list): List of tuples of 4 coordinates representing rectangles to mask.
 
-    
     Returns:
-    numpy.ndarray: The image with triangles masked.
+        ndarray: The image with triangles masked.
     """
     rows, cols = data.shape
     mask = np.zeros((rows, cols), dtype=bool)
@@ -129,11 +128,9 @@ def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_
         # Create a path object for the triangle
         path = matPath(triangle)
         
-        # Create a grid of points
+        # Determine which points are inside the triangle
         y, x = np.mgrid[:rows, :cols]
         points = np.vstack((x.flatten(), y.flatten())).T
-        
-        # Determine which points are inside the triangle
         mask = np.logical_or(mask, path.contains_points(points).reshape(rows, cols))
 
     # Mask the specified columns
@@ -146,10 +143,9 @@ def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_
 
 
 # Mask for Nickel images (masking bad columns and blind corners)
-img_shape = (1024, 1024)
 columns_to_mask = bad_columns
 triangles_to_mask = bad_triangles
 rectangles_to_mask = bad_rectangles
-mask_cols_only = add_mask(np.zeros(img_shape), columns_to_mask, [], []).mask
-mask = add_mask(np.zeros(img_shape), columns_to_mask, triangles_to_mask,
+mask_cols_only = add_mask(np.zeros(ccd_shape), columns_to_mask, [], []).mask
+mask = add_mask(np.zeros(ccd_shape), columns_to_mask, triangles_to_mask,
                 rectangles_to_mask).mask

@@ -1,3 +1,6 @@
+# Conditions used to sort data by a category 
+# Uses range of image numbers (d1078.fits = 78)
+
 conditions_06_26 = [(1.375, (65, 74)),
                     (1.624, (22, 31)),
                     (1.625, (88, 105)),

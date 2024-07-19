@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from loess.loess_2d import loess_2d
+from nickelpipeline.convenience.nickel_data import ccd_shape
 
 
 def smooth_contour(data_x, data_y, data_vals, color_range, backgrd_ax=None, 
@@ -18,8 +19,8 @@ def smooth_contour(data_x, data_y, data_vals, color_range, backgrd_ax=None,
     # Create a grid for at which to sample the smoothed parameters
     subplot_size = 15
     border = int(subplot_size / 2)
-    grid_x, grid_y = np.mgrid[border:1024-border:subplot_size, 
-                                border:1024-border:subplot_size]
+    grid_x, grid_y = np.mgrid[border:ccd_shape[0]-border:subplot_size, 
+                                border:ccd_shape[1]-border:subplot_size]
     
     try:
         param_list, _ = loess_2d(data_x, data_y, data_vals, xnew=grid_x.flatten(),

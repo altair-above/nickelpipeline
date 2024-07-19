@@ -1,6 +1,7 @@
 
 # For the Nickel Telescope original science camera
 plate_scale_approx = 0.37
+ccd_shape = (1024, 1024)
 
 sat_columns = [255]
 

@@ -24,15 +24,55 @@ def categories_from_conditions(condition_tuples: list, images: list) -> dict:
     return categories
 
 
-def unzip_directories(path_list: list, files: list = None, output_format: str = 'Fits_Simple', allow_exceptions: bool = False) -> list:
+# def unzip_directories(path_list: list, files: list = None, output_format: str = 'Fits_Simple', allow_exceptions: bool = False) -> list:
+#     """
+#     Unzips a list of directories/files to access all files inside 
+#     and returns a list of image objects.
+
+#     Args:
+#         path_list (list): List of paths to unzip.
+#         files (list, optional): List of files to unzip. Defaults to None.
+#         output_format (str, optional): The format of the output objects. Defaults to 'Fits_Simple'.
+
+#     Returns:
+#         list: List of image objects.
+#     """
+#     if output_format == 'Path':
+#         output = Path
+#     elif output_format == 'Fits_Simple':
+#         output = Fits_Simple
+    
+#     if files is not None:
+#         images = [output(file) for file in files]
+#         print("'files' parameter is not ideal. 'directories' handles lists that contain both directories & files")
+#     else:
+#         images = []
+#         for elem_path in path_list:
+#             elem_path = Path(elem_path)
+#             if elem_path.is_dir():
+#                 if allow_exceptions:
+#                     for file in Path(elem_path).iterdir():
+#                         try:
+#                             images.append(Fits_Simple(file))
+#                         except (KeyError, OSError):
+#                             continue
+#                 else:
+#                     images += [output(file) for file in elem_path.iterdir()]
+#             elif elem_path.is_file():
+#                 images.append(output(elem_path))
+#     return images
+
+
+def unzip_directories(path_list: list, output_format: str = 'Fits_Simple', 
+                      allow_exceptions: bool = False) -> list:
     """
     Unzips a list of directories/files to access all files inside 
     and returns a list of image objects.
 
     Args:
         path_list (list): List of paths to unzip.
-        files (list, optional): List of files to unzip. Defaults to None.
         output_format (str, optional): The format of the output objects. Defaults to 'Fits_Simple'.
+        allow_exceptions (bool): Whether to allow for file not found errors
 
     Returns:
         list: List of image objects.
@@ -42,23 +82,19 @@ def unzip_directories(path_list: list, files: list = None, output_format: str = 
     elif output_format == 'Fits_Simple':
         output = Fits_Simple
     
-    if files is not None:
-        images = [output(file) for file in files]
-        print("'files' parameter is not ideal. 'directories' handles lists that contain both directories & files")
-    else:
-        images = []
-        for elem_path in path_list:
-            elem_path = Path(elem_path)
-            if elem_path.is_dir():
-                if allow_exceptions:
-                    for file in Path(elem_path).iterdir():
-                        try:
-                            images.append(Fits_Simple(file))
-                        except (KeyError, OSError):
-                            continue
-                else:
-                    images += [output(file) for file in elem_path.iterdir()]
-            elif elem_path.is_file():
-                images.append(output(elem_path))
+    images = []
+    for elem_path in path_list:
+        elem_path = Path(elem_path)
+        if elem_path.is_dir():
+            if allow_exceptions:
+                for file in Path(elem_path).iterdir():
+                    try:
+                        images.append(Fits_Simple(file))
+                    except (KeyError, OSError):
+                        pass
+            else:
+                images += [output(file) for file in elem_path.iterdir()]
+        elif elem_path.is_file():
+            images.append(output(elem_path))
     return images
 

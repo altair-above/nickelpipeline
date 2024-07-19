@@ -156,7 +156,7 @@ NEXT BIG STEP
 |- Separate source plots
 - Plot image in background
 
-- Question-- how to handle constantly passing lots of arguments to other functions?
+|- Question-- how to handle constantly passing lots of arguments to other functions?
 |- Abstract?
 |- Move git stuff online
 
@@ -164,9 +164,21 @@ NEXT BIG STEP
 
 |- Google doc with plots & their analysis
 
-pip install -e .
-^ the -e pulls directly from the repository, instead of installing a static copy in site-packages
+|- pip install -e .
+    ^ the -e pulls directly from the repository, instead of installing a static copy in site-packages
 
 - Make sure astrometry.net is still working 😭
 
+1. Logging (python logging package)
+    - Include #s of images, etc.
+2. Use ccdproc functions instead of Steven's pipeline
+3. Scriptify (reduction pipeline takes in just 1 arg (raw) and runs in main)
+    - Use scriptbase
+    - Rerun pip install every time adding script to setup.cfg
+    - eep main simple
+4. Adding more contorl (what name for reduced directory, what files get processed)
+    - Store which biases, flats, etc. to use in a file?
+5. docs
+    - Docs directory
+    - Kyle will start it out and do a pull request
 
