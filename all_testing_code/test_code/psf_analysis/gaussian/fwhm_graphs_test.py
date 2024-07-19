@@ -3,7 +3,7 @@ from pathlib import Path
 from nickelpipeline.psf_analysis.gaussian.fwhm_graphs import graph_fwhms_by_image, graph_fwhms_by_setting, multi_date_graph_fwhms_by_setting
 from nickelpipeline.convenience.conditions import conditions_06_26, conditions
 
-from nickelpipeline.reduction.reduction_mod_basic import generate_reduction_files, process_single
+from nickelpipeline.reduction.reduction_split import generate_reduction_files, process_single
 
 
 warnings.filterwarnings('ignore')

@@ -7,7 +7,7 @@ from scipy import stats
 
 from nickelpipeline.psf_analysis.gaussian.calc_fwhm import batch_fwhm
 from nickelpipeline.convenience.dir_nav import categories_from_conditions, unzip_directories
-from nickelpipeline.astrometry.nickel_data import plate_scale_approx   # For the Nickel Telescope original science camera
+from nickelpipeline.convenience.nickel_data import plate_scale_approx   # For the Nickel Telescope original science camera
 
 
 def graph_fwhms_by_image(path_list, date=None, plot=False, max_std=0.5):

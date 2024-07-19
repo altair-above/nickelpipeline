@@ -3,8 +3,11 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Union
 from astropy.io import fits
-from nickelpipeline.convenience.fits_class import Fits_Simple
 from astropy.visualization import ZScaleInterval
+
+from nickelpipeline.convenience.fits_class import Fits_Simple
+from nickelpipeline.convenience.dir_nav import unzip_directories
+from nickelpipeline.convenience.nickel_data import bad_columns
 
 
 def print_fits_info(image_path: str):
@@ -19,7 +22,9 @@ def print_fits_info(image_path: str):
         print(repr(hdul[0].header))
         
         plt.figure(figsize=(8, 6))
-        plt.imshow(hdul[0].data, origin='lower')
+        interval = ZScaleInterval()
+        vmin, vmax = interval.get_limits(hdul[0].data)
+        plt.imshow(hdul[0].data, origin='lower', vmin=vmin, vmax=vmax)
         plt.gcf().set_dpi(300)
         plt.colorbar()
         plt.show()
@@ -39,7 +44,7 @@ def display_nickel(image: Union[str, Fits_Simple]):
     print(f'Filter = {image.filtnam}')
 
     data = image.data
-    data = np.delete(data, [255, 256, 783, 784, 1002], axis=1)
+    data = np.delete(data, bad_columns, axis=1)
     plt.figure(figsize=(8, 6))
 
     interval = ZScaleInterval()
@@ -47,22 +52,15 @@ def display_nickel(image: Union[str, Fits_Simple]):
     plt.imshow(data, origin='lower', vmin=vmin, vmax=vmax)
     plt.gcf().set_dpi(300)
     plt.colorbar()
+    plt.show()
    
-def display_many_nickel(directories, files=None):
+def display_many_nickel(path_list):
     """
     Displays the data of all images in a list of directories or files.
 
     Args:
         image (Union[str, Fits_Simple]): The Fits_Simple object or path to the FITS image.
     """
-    if files is not None:
-        images = [Fits_Simple(file) for file in files]
-    else:
-        if not isinstance(directories, list):
-            directories = [directories,]
-        images = []
-        for dir in directories:
-            dir = Path(dir)
-            images += [Fits_Simple(file) for file in dir.iterdir()]
+    images = unzip_directories(path_list, output_format='Fits_Simple')
     for image in images:
         display_nickel(image)

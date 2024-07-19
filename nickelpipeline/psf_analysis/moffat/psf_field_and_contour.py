@@ -16,7 +16,7 @@ from nickelpipeline.psf_analysis.moffat.model_psf import FitEllipticalMoffat2D, 
 
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 from nickelpipeline.convenience.graphs import smooth_contour, scatter_sources
-from nickelpipeline.astrometry.nickel_data import plate_scale_approx    # For the Nickel Telescope original camera
+from nickelpipeline.convenience.nickel_data import plate_scale_approx    # For the Nickel Telescope original camera
 
 
 def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False, 

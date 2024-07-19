@@ -9,7 +9,7 @@ from nickelpipeline.psf_analysis.gaussian.calc_fwhm import calc_fwhm
 
 from nickelpipeline.convenience.dir_nav import categories_from_conditions, unzip_directories
 from nickelpipeline.convenience.graphs import smooth_contour, scatter_sources
-from nickelpipeline.astrometry.nickel_data import plate_scale_approx
+from nickelpipeline.convenience.nickel_data import plate_scale_approx
 from nickelpipeline.astrometry.plate_scale import avg_plate_scale
 
 plate_scale_approx = 0.37   # For the Nickel Telescope

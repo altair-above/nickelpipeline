@@ -14,16 +14,6 @@ from nickelpipeline.psf_analysis.moffat.fit_psf import fit_psf_stack, psf_plot
 from nickelpipeline.convenience.dir_nav import categories_from_conditions, unzip_directories
 
 
-# Example of conditions:
-# conditions_06_26 = [(1.375, (65, 74)),
-#                     (1.624, (22, 31)),
-#                     (1.625, (88, 105)),
-#                     (1.875, (33, 42)),
-#                     (2.625, (43, 53)),
-#                     (3.375, (54, 64)),
-#                     ]
-
-
 # Labels for plotting
 spacer_label = 'Spacer Width (in)'
 fwhm_label = 'FWHM (pix)'

@@ -16,9 +16,10 @@ from astropy.visualization import ZScaleInterval
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats import SigmaClip
 
-from nickelpipeline.reduction.reduction_mod_basic import process_single
+from nickelpipeline.reduction.reduction_split import process_single
 from nickelpipeline.convenience.fits_class import Fits_Simple
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
+from nickelpipeline.convenience.nickel_data import bad_columns
 
 # from astrometry.plate_scale import avg_plate_scale
 
@@ -84,10 +85,9 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
     # aper_size = 1.5*default_fwhm/2
 
     unmasked_img = image.data
-    # Mask specific columns
-    columns_to_mask = [255, 256, 783, 784, 1002]
+    # Mask specific bad columns
     column_mask = np.zeros(unmasked_img.shape[1], dtype=bool)
-    column_mask[columns_to_mask] = True
+    column_mask[bad_columns] = True
 
     # Create a masked array with the masked columns
     img = np.ma.masked_array(unmasked_img, mask=np.zeros_like(unmasked_img, dtype=bool))

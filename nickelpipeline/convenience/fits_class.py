@@ -1,11 +1,15 @@
-from astropy.io import fits
-from pathlib import Path
-from typing import Union
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
+import matplotlib.pyplot as plt
+from matplotlib.path import Path as matPath
+from astropy.io import fits
+from astropy.visualization import ZScaleInterval
+from pathlib import Path
+from typing import Union
 
+from nickelpipeline.convenience.nickel_data import bad_columns, bad_triangles, bad_rectangles
 
+        
 class Fits_Simple:
     """
     A simple class to handle FITS files.
@@ -59,16 +63,8 @@ class Fits_Simple:
             self.filtnam = self.header["FILTNAM"]
             self.exptime = self.header["EXPTIME"]
             
-            # Mask for Nickel images (masking bad columns and blind corners)
-            columns_to_mask = [255, 256, 783, 784, 1002]
-            triangles_to_mask = [] #[((0, 960), (64, 1024)), ((0, 33), (34, 0))]
-            rectangles_to_mask = [((0,960), (64, 1024)), ((0,0), (34, 33))]
-
-            self.masked_array_cols_only = add_mask(self.data, columns_to_mask, 
-                                                   triangles_to_mask, [])
-            self.masked_array = add_mask(self.data, columns_to_mask, triangles_to_mask,
-                                         rectangles_to_mask)
-            self.mask = self.masked_array.mask
+            self.mask = mask
+            self.masked_array = ma.masked_array(self.data, mask)
     
     def __str__(self) -> str:
         """
@@ -97,49 +93,63 @@ class Fits_Simple:
                 print(hdul[0].data)
             
             plt.figure(figsize=(8, 6))
-            plt.imshow(hdul[0].data, origin='lower')
+            interval = ZScaleInterval()
+            vmin, vmax = interval.get_limits(hdul[0].data)
+            plt.imshow(hdul[0].data, origin='lower', vmin=vmin, vmax=vmax)
             plt.gcf().set_dpi(300)
             plt.colorbar()
             plt.show()
 
 
-def add_mask(data: np.ndarray, columns_to_mask: list, triangles_to_mask: list, rectangles_to_mask: list) -> ma.MaskedArray:
+def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_mask: list) -> ma.MaskedArray:
     """
-    Create a masked array with specified columns and regions masked.
+    Masks the triangles from the image by setting the pixel values within those triangles to zero.
 
     Args:
-        data (np.ndarray): The data to be masked.
-        columns_to_mask (list): List of column indices to mask.
-        triangles_to_mask (list): List of tuples representing triangles to mask.
-        rectangles_to_mask (list): List of tuples representing rectangles to mask.
+        data (ndarray): 2D numpy array representing the image to mask.
+        cols_to_mask (list): List of column indices to mask.
+        tris_to_mask (list): List of tuples of 3 coordinates representing triangles to mask.
+        rects_to_mask (list): List of tuples of 4 coordinates representing rectangles to mask.
 
+    
     Returns:
-        ma.MaskedArray: A masked array with specified regions masked.
+    numpy.ndarray: The image with triangles masked.
     """
     rows, cols = data.shape
     mask = np.zeros((rows, cols), dtype=bool)
-    # mask = mask.T
     
-    for rectangle in rectangles_to_mask:
+    # Mask the rectangles
+    for rectangle in rects_to_mask:
         mask[rectangle[0][0]:rectangle[1][0],
              rectangle[0][1]:rectangle[1][1]] = True
+    # Transpose mask so that correct areas are masked (FITS indexing is odd)
     mask = mask.T
 
-    # Mask the specified columns
-    for col in columns_to_mask:
-        mask[:, col] = True
+    for triangle in tris_to_mask:
+        # Create a path object for the triangle
+        path = matPath(triangle)
         
-    # Mask the specified triangular regions
-    for triangle in triangles_to_mask:
-        (r0, c0), (r1, c1) = triangle
-        for r in range(rows):
-            for c in range(cols):
-                # Use line equation to determine if point (r, c) is inside the triangle
-                # Equation of a line in parametric form: (x - x0) / (x1 - x0) = (y - y0) / (y1 - y0)
-                if (r0 <= r <= r1 and c0 <= c <= c1) or (r1 <= r <= r0 and c1 <= c <= c0):
-                    mask[r, c] = True
+        # Create a grid of points
+        y, x = np.mgrid[:rows, :cols]
+        points = np.vstack((x.flatten(), y.flatten())).T
+        
+        # Determine which points are inside the triangle
+        mask = np.logical_or(mask, path.contains_points(points).reshape(rows, cols))
+
+    # Mask the specified columns
+    for col in cols_to_mask:
+        mask[:, col] = True
     
     # Create the masked array
-    masked_array = ma.masked_array(data, mask)
-    return masked_array
+    masked_data = ma.masked_array(data, mask)
+    return masked_data
 
+
+# Mask for Nickel images (masking bad columns and blind corners)
+img_shape = (1024, 1024)
+columns_to_mask = bad_columns
+triangles_to_mask = bad_triangles
+rectangles_to_mask = bad_rectangles
+mask_cols_only = add_mask(np.zeros(img_shape), columns_to_mask, [], []).mask
+mask = add_mask(np.zeros(img_shape), columns_to_mask, triangles_to_mask,
+                rectangles_to_mask).mask
