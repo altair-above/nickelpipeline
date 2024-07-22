@@ -58,13 +58,21 @@ class Fits_Simple:
                 self.header = hdu[0].header
                 self.data = hdu[0].data
             
-            self.image_num = int(self.filename[2:5])
-            self.object = self.header["OBJECT"]
-            self.filtnam = self.header["FILTNAM"]
-            self.exptime = self.header["EXPTIME"]
+            try:
+                self.image_num = int(self.filename[2:5])
+                self.object = self.header["OBJECT"]
+                self.filtnam = self.header["FILTNAM"]
+                self.exptime = self.header["EXPTIME"]
+            except:
+                # For FITS images with limited header information
+                self.image_num = None
+                self.object = None
+                self.filtnam = None
+                self.exptime = None
             
-            self.mask = mask
-            self.masked_array = ma.masked_array(self.data, mask)
+            if self.data.shape == ccd_shape:
+                self.mask = mask
+                self.masked_array = ma.masked_array(self.data, mask)
     
     def __str__(self) -> str:
         """

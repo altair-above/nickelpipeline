@@ -123,7 +123,7 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=Tr
             if data['status'] == 'failed':
                 print('Job failed')
                 return False
-            if t > 45:
+            if t > 90:
                 print('Maximum time elapsed... exiting')
                 return False
             time_check(t, interval)

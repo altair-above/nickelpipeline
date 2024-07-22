@@ -55,7 +55,7 @@ def reduce_all(rawdir):
     
     overscan_subtraction(rawfiles, overscan_files, 'yes')
     logger.info(f"Overscan subtracted images saved to {overscan_dir}")
-
+    
     obj_list = []
     exptime_list = []
     filt_list = []
