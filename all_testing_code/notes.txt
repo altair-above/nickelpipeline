@@ -182,3 +182,37 @@ NEXT BIG STEP
     - Docs directory
     - Kyle will start it out and do a pull request
 
+
+- Issues with reduction
+    - Bottom left corner, slightly bright spot (flat issue)
+    - Cosmic rays / airplanes / satellites
+        - is it proportional to exptime?
+        - Stacking to eliminate?
+            - correct seeing to max
+    - Random spots (bright)
+    - Lightening on right edge (sometimes darkening)
+    - Dark spot right in the middle
+
+
+- Sigma clip mean for flats
+    - keep track of how many images go into each pixel (due to clipping)
+    - might need to sigma clip biases as well (hot pixels)
+
+- ccdproc 2d background fitter? for photometry
+    - if so implement for galaxies?
+    - photutils?
+
+- make img_num extraction more flexible
+    - reverse engineering to get back to image name might require looking at the format of the rest of the images
+    - str(3).zfill(4) = '0003'
+
+- process files into a table, and then reduce from the table
+    - people can comment out bad files
+
+
+Confirmation--can I multiply all images by gain, perform regular reduction,
+and have everything come out correct?
+ccd.unit = electrons, but ccd.data.unit = electrons/ADU
+
+bug in ccdproc -- when gain_apply = True, the units are wrong (electron/adu vs electrons)
+bc cleanarr being passed to the gain_apply function with no units

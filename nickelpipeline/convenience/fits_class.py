@@ -7,7 +7,8 @@ from astropy.visualization import ZScaleInterval
 from pathlib import Path
 from typing import Union
 
-from nickelpipeline.convenience.nickel_data import ccd_shape, bad_columns, bad_triangles, bad_rectangles
+from nickelpipeline.convenience.nickel_data import (ccd_shape, fov_shape, bad_columns, 
+                                                    bad_triangles, bad_rectangles)
 
         
 class Fits_Simple:
@@ -54,9 +55,17 @@ class Fits_Simple:
             self.path = image_path
             self.filename = image_path.stem
         
-            with fits.open(image_path) as hdu:
-                self.header = hdu[0].header
-                self.data = hdu[0].data
+            with fits.open(image_path) as hdul:
+                self.header = hdul[0].header
+                self.data = hdul[0].data
+                try:
+                    self.mask = hdul['MASK'].data
+                except KeyError:
+                    if all(self.data.shape == ccd_shape):
+                        self.mask = nickel_mask
+                    elif all(self.data.shape == fov_shape):
+                        self.mask = nickel_fov_mask
+            self.masked_array = ma.masked_array(self.data, self.mask)
             
             try:
                 self.image_num = int(self.filename[2:5])
@@ -69,10 +78,6 @@ class Fits_Simple:
                 self.object = None
                 self.filtnam = None
                 self.exptime = None
-            
-            if self.data.shape == ccd_shape:
-                self.mask = mask
-                self.masked_array = ma.masked_array(self.data, mask)
     
     def __str__(self) -> str:
         """
@@ -151,9 +156,18 @@ def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_
 
 
 # Mask for Nickel images (masking bad columns and blind corners)
-columns_to_mask = bad_columns
-triangles_to_mask = bad_triangles
-rectangles_to_mask = bad_rectangles
-mask_cols_only = add_mask(np.zeros(ccd_shape), columns_to_mask, [], []).mask
-mask = add_mask(np.zeros(ccd_shape), columns_to_mask, triangles_to_mask,
-                rectangles_to_mask).mask
+nickel_mask_cols_only = add_mask(np.zeros(ccd_shape), bad_columns, [], []).mask
+nickel_mask = add_mask(np.zeros(ccd_shape), bad_columns, bad_triangles,
+                       bad_rectangles).mask
+
+# Calculate the padding needed
+pad_height = fov_shape[0] - ccd_shape[0]
+pad_width = fov_shape[1] - ccd_shape[1]
+
+nickel_fov_mask_cols_only = add_mask(np.zeros(ccd_shape), bad_columns, [], []).mask
+nickel_fov_mask = add_mask(np.zeros(ccd_shape), bad_columns, bad_triangles,
+                           bad_rectangles).mask
+# Apply padding
+nickel_fov_mask_cols_only = np.pad(nickel_fov_mask_cols_only, ((0, pad_height), (0, pad_width)), mode='constant', constant_values=0)
+nickel_fov_mask = np.pad(nickel_fov_mask, ((0, pad_height), (0, pad_width)), mode='constant', constant_values=0)
+

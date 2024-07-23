@@ -138,7 +138,7 @@ def reduce_all(rawdir):
                 hdul = fits.open(str(flatfile))
                 flatdata.append(hdul[0].data)
                 hdul.close()
-            flat = np.stack(flatdata).mean(axis=0)
+            flat = np.stack(flatdata).median(axis=0)
         else:
             hdul = fits.open(str(flatfiles[0]))
             flat = hdul[0].data

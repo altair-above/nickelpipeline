@@ -7,9 +7,12 @@ import pandas as pd
 
 from astropy.io import fits
 from astropy.nddata import CCDData
+from astropy.units.quantity import Quantity
+import astropy.units as u
 import ccdproc
 
-from nickelpipeline.convenience.nickel_data import sat_columns
+from nickelpipeline.convenience.nickel_data import gain, read_noise
+from nickelpipeline.convenience.fits_class import nickel_fov_mask_cols_only
 from nickelpipeline.convenience.log import default_logger
 
 module_name = __name__.split('.')[-1]
@@ -34,20 +37,38 @@ sky_flat_label = norm_str(sky_flat_label)
 dark_label = norm_str(dark_label)
 focus_label = norm_str(focus_label)
 
-def reduce_all(rawdir, save_inters=False):
+def create_exclusion_func(exclude_list):
+    def exclude_func(test_str):
+        for excluded_str in exclude_list:
+            if excluded_str in test_str:
+                return False
+        return True
+    return exclude_func
+
+
+
+def reduce_all(rawdir, save_inters=False, exclude_files=None, exclude_obj_strs=None):
+    # exclude = list of file stems (i.e. not .fits) from rawdir to be excluded
+    #########exlude by object name as well?
+    # exclude by range
     
     if not isinstance(rawdir, Path):
         rawdir = Path(rawdir)
-    logger.info(f"---- reduce_all called on {rawdir}")
+    logger.info(f"---- reduce_all() called on {rawdir}")
     
-    rawfiles = [file for file in rawdir.iterdir() if file.is_file()]
+    # Extract raw files (as paths) from directory, eliminating excluded files
+    rawfiles = [file for file in rawdir.iterdir() if (file.is_file() and
+                                                      file.stem not in exclude_files)]
     logger.info(f"{len(rawfiles)} raw files extracted")
+    logger.info(f"Excluded files {exclude_files}")
     
+    # Make directories for saving results
     reddir = rawdir.parent / 'reduced'
     Path.mkdir(reddir, exist_ok=True)
     procdir = rawdir.parent / 'processing'
     Path.mkdir(procdir, exist_ok=True)
     
+    # Create DataFrame for files
     obj_list = []
     filt_list = []
     for file in rawfiles:
@@ -62,11 +83,23 @@ def reduce_all(rawdir, save_inters=False):
         "filts": filt_list,
         "paths": rawfiles
         })
+    
+    exclude_obj_strs = [norm_str(obj_str) for obj_str in exclude_obj_strs]
+    exclude_func = create_exclusion_func(exclude_obj_strs)
+    file_df = file_df[file_df.objects.apply(exclude_func)]
+    logger.info(f"Excluded files with {exclude_obj_strs} in the object name")
 
+    logger.info(f"Intializing CCDData objects & removing cosmic rays")
+    # Create CCDData objects
+    ccd_objs = [init_ccddata(file) for file in file_df.files]
+    file_df.files = ccd_objs
+    # return ccd_objs
+
+    # Generate master bias & master flats
     master_bias = get_master_bias(file_df, save=save_inters, save_dir=procdir)
-
     master_flats = get_master_flats(file_df, save=save_inters, save_dir=procdir)
 
+    # Create new DataFrame with just object images
     scifiles_mask = ((file_df.objects != bias_label) &
                     (file_df.objects != dark_label) &
                     (file_df.objects != dome_flat_label) &
@@ -74,19 +107,20 @@ def reduce_all(rawdir, save_inters=False):
                     (file_df.objects != focus_label)).values
     scifile_df = file_df.copy()[scifiles_mask]
 
+    # Perform overscan subtraction & trimming
     logger.info(f"Performing overscan subtraction & trimming on {len(scifile_df.files)} science images")
-    overscan_files = [trim_overscan(scifile) for scifile in scifile_df.files]
+    scifile_df.files = [trim_overscan(scifile) for scifile in scifile_df.files]
     if save_inters:
-        save_results(overscan_files, scifile_df, 'over', procdir/'overscan')
-    scifile_df.files = overscan_files
+        save_results(scifile_df, 'over', procdir/'overscan')
     
+    # Perform bias subtraction
     logger.info(f"Performing bias subtraction on {len(scifile_df.files)} science images")
-    unbias_files = [ccdproc.subtract_bias(scifile, master_bias) 
-                      for scifile in scifile_df.files]
+    scifile_df.files = [ccdproc.subtract_bias(scifile, master_bias) 
+                    for scifile in scifile_df.files]
     if save_inters:
-        save_results(unbias_files, scifile_df, 'unbias', procdir/'unbias')
-    scifile_df.files = unbias_files
+        save_results(scifile_df, 'unbias', procdir/'unbias')
 
+    # Perform flat division
     logger.info("Performing flat division")
     all_red_paths = []
     for filt in master_flats.keys():
@@ -100,16 +134,37 @@ def reduce_all(rawdir, save_inters=False):
             sci_dir = reddir / (scienceobject + '_' + filt)
             
             # Do flat division
-            red_files = [ccdproc.flat_correct(scifile, master_flats[filt]) 
+            sub_scifile_df.files = [ccdproc.flat_correct(scifile, master_flats[filt]) 
                          for scifile in sub_scifile_df.files]
             
-            logger.info(f"{filt} Filter - Saving {len(red_files)} fully reduced {scienceobject} images to {sci_dir}")
-            red_paths = save_results(red_files, sub_scifile_df, 'red', sci_dir)
+            logger.info(f"{filt} Filter - Saving {len(sub_scifile_df.files)} fully reduced {scienceobject} images to {sci_dir}")
+            red_paths = save_results(sub_scifile_df, 'red', sci_dir)
             all_red_paths += red_paths
     
     logger.info(f"Flat divided images saved to {reddir}")
-    logger.info("---- reduce_all call ended")
+    logger.info("---- reduce_all() call ended")
     return all_red_paths
+
+
+def init_ccddata(frame):
+    ccd = CCDData.read(frame, unit=u.adu)
+    # print(ccd.unit)
+    # print(ccd.data)
+    # ccd.data = Quantity(ccd.data, unit='adu')
+    # # print(ccd.data)
+    # print(ccd.unit)
+    # print(ccd.data.unit)
+    # print(ccd.data)
+    ccd.mask = nickel_fov_mask_cols_only
+    ccd = ccdproc.cosmicray_lacosmic(ccd, gain_apply=False, gain=gain, 
+                                     readnoise=read_noise, verbose=False)
+    ccd.data = ccd.data * gain #* u.electron
+    # print(ccd.unit)
+    # print(ccd.data.unit)
+    # print(ccd.data)
+    # print(type(ccd.data))
+    # ccd.data.unit = ccd.data
+    return ccd
 
 
 def trim_overscan(frame):
@@ -119,7 +174,8 @@ def trim_overscan(frame):
         nr = hdr['NAXIS2']
         return f'[{nc-no+1}:{nc},1:{nr}]'
     
-    ccd = CCDData.read(frame, unit='adu')
+    # ccd = CCDData.read(frame, unit='adu')
+    ccd = frame
     oscansec = nickel_oscansec(ccd.header)
     proc_ccd = ccdproc.subtract_overscan(ccd, fits_section=oscansec, overscan_axis=1)
     return ccdproc.trim_image(proc_ccd, fits_section=ccd.header['DATASEC'])
@@ -127,8 +183,6 @@ def trim_overscan(frame):
 
 def stack_frames(raw_frames, frame_type):
     trimmed_frames = [trim_overscan(frame) for frame in raw_frames]
-    # trimmed_frames = [ccdproc.cosmicray_median(frame, error_image=np.ones(frame.data.shape)*np.std(frame.data)) for frame in trimmed_frames]
-    
     combiner = ccdproc.Combiner(trimmed_frames)
     
     old_n_masked = 0
@@ -147,10 +201,10 @@ def stack_frames(raw_frames, frame_type):
 
 def get_master_bias(file_df, save=True, save_dir=None):
     logger.info(f"Combining bias files into master bias")
-    bias_files = file_df.files[file_df.objects == bias_label]
-    logger.info(f"Using {len(bias_files)} bias frames: {[file.name.split('_')[0] for file in bias_files]}")
+    bias_df = file_df.copy()[file_df.objects == bias_label]
+    logger.info(f"Using {len(bias_df.files)} bias frames: {[file.name.split('_')[0] for file in bias_df.paths]}")
 
-    master_bias = stack_frames(bias_files, frame_type='bias')
+    master_bias = stack_frames(bias_df.files, frame_type='bias')
     
     if save:
         master_bias.header["OBJECT"] = "Master_Bias"
@@ -173,10 +227,10 @@ def get_master_flats(file_df, save=True, save_dir=None):
     filts = list(set(file_df.filts[file_df.objects == flattype]))
     master_flats = {}
     for filt in filts:
-        flat_files = list(file_df.files[(file_df.objects == flattype) & (file_df.filts == filt)])
-        logger.info(f"Using {len(flat_files)} flat frames: {[path.name.split('_')[0] for path in flat_files]}")
+        flat_df = file_df.copy()[(file_df.objects == flattype) & (file_df.filts == filt)]
+        logger.info(f"Using {len(flat_df.files)} flat frames: {[path.name.split('_')[0] for path in flat_df.paths]}")
 
-        master_flat = stack_frames(flat_files, frame_type='flat')
+        master_flat = stack_frames(flat_df.files, frame_type='flat')
         
         if save:
             master_flat.header["OBJECT"] = filt + "-Band_Master_Flat"
@@ -187,14 +241,33 @@ def get_master_flats(file_df, save=True, save_dir=None):
     return master_flats
 
 
-def save_results(files, scifile_df, modifier_str, save_dir):
+def save_results(scifile_df, modifier_str, save_dir):
     Path.mkdir(save_dir, exist_ok=True)
-    save_paths = [save_dir / (path.stem.split('_')[0] + f"_{modifier_str}" + path.suffix) for path in scifile_df.paths]
-    for file, path in zip(files, save_paths):
+    logger.info(f"Saving {len(scifile_df.files)} fully reduced {save_dir.name} images to {save_dir}")
+    save_paths = [save_dir / (path.name.split('_')[0] + f"_{modifier_str}" + path.suffix) for path in scifile_df.paths]
+    for file, path in zip(scifile_df.files, save_paths):
         file.write(path, overwrite=True)
     return save_paths
     
+
+
+
+# def include_file(object, mode, exclude_all):
+#     if norm_str(object) == mode:
+#         return True
     
+#     if mode == 'BIAS':
+#         pass
+#     elif mode == 'DOMEFLAT':
+#         pass
+#     elif mode == 'SKYFLAT':
+#         if norm_str(object) == 'FLAT':
+#             return True
+#     elif mode == 
+
+
+
+
 def main():
     
     # parfile = 'rdx.toml'
