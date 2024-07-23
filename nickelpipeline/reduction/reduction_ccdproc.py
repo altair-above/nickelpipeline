@@ -37,14 +37,19 @@ sky_flat_label = norm_str(sky_flat_label)
 dark_label = norm_str(dark_label)
 focus_label = norm_str(focus_label)
 
-def create_exclusion_func(exclude_list):
-    def exclude_func(test_str):
+def create_exclusion_func(exclude_list, mode='str'):
+    if exclude_list is None:
+        return lambda _: True
+    if mode == 'str':
+        exclude_list = [norm_str(obj_str) for obj_str in exclude_list]
+    def exclude_func(target):
+        if mode == 'path':
+            target = target.name
         for excluded_str in exclude_list:
-            if excluded_str in test_str:
+            if excluded_str in target:
                 return False
         return True
     return exclude_func
-
 
 
 def reduce_all(rawdir, save_inters=False, exclude_files=None, exclude_obj_strs=None):
@@ -57,10 +62,8 @@ def reduce_all(rawdir, save_inters=False, exclude_files=None, exclude_obj_strs=N
     logger.info(f"---- reduce_all() called on {rawdir}")
     
     # Extract raw files (as paths) from directory, eliminating excluded files
-    rawfiles = [file for file in rawdir.iterdir() if (file.is_file() and
-                                                      file.stem not in exclude_files)]
+    rawfiles = [file for file in rawdir.iterdir() if (file.is_file())]
     logger.info(f"{len(rawfiles)} raw files extracted")
-    logger.info(f"Excluded files {exclude_files}")
     
     # Make directories for saving results
     reddir = rawdir.parent / 'reduced'
@@ -84,9 +87,13 @@ def reduce_all(rawdir, save_inters=False, exclude_files=None, exclude_obj_strs=N
         "paths": rawfiles
         })
     
-    exclude_obj_strs = [norm_str(obj_str) for obj_str in exclude_obj_strs]
-    exclude_func = create_exclusion_func(exclude_obj_strs)
-    file_df = file_df[file_df.objects.apply(exclude_func)]
+    exclude_func = create_exclusion_func(exclude_files, mode='path')
+    file_df = file_df.copy()[file_df.paths.apply(exclude_func)]
+    logger.info(f"Excluded files {exclude_files}")
+    
+    exclude_obj_strs.append(focus_label)
+    exclude_func = create_exclusion_func(exclude_obj_strs, mode='str')
+    file_df = file_df.copy()[file_df.objects.apply(exclude_func)]
     logger.info(f"Excluded files with {exclude_obj_strs} in the object name")
 
     logger.info(f"Intializing CCDData objects & removing cosmic rays")
@@ -128,7 +135,7 @@ def reduce_all(rawdir, save_inters=False, exclude_files=None, exclude_obj_strs=N
         
         for scienceobject in scienceobjects:
             # Take the subset of scifile_df containing scienceobject in filter filt
-            sub_scifile_df = scifile_df[(scifile_df.objects == scienceobject) &
+            sub_scifile_df = scifile_df.copy()[(scifile_df.objects == scienceobject) &
                                         (scifile_df.filts == filt)]
             # Make a new directory for each science target / filter combination
             sci_dir = reddir / (scienceobject + '_' + filt)

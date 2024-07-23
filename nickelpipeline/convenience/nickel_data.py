@@ -11,5 +11,6 @@ bad_columns = [255, 256, 783, 784, 1002]
 bad_triangles = [((0, 960), (64, 1024), (0, 1024)), ((0, 33), (34, 0), (0, 0))]
 bad_rectangles = []
 
+# For slow readout speed and 2x2 binning
 gain = 1.8
 read_noise = 10.7

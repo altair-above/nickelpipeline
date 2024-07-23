@@ -183,15 +183,15 @@ NEXT BIG STEP
     - Kyle will start it out and do a pull request
 
 
-- Issues with reduction
-    - Bottom left corner, slightly bright spot (flat issue)
+|- Issues with reduction
+    |- Bottom left corner, slightly bright spot (flat issue)
     - Cosmic rays / airplanes / satellites
         - is it proportional to exptime?
         - Stacking to eliminate?
             - correct seeing to max
-    - Random spots (bright)
-    - Lightening on right edge (sometimes darkening)
-    - Dark spot right in the middle
+    |- Random spots (bright)
+    |- Lightening on right edge (sometimes darkening)
+    |- Dark spot right in the middle
 
 
 - Sigma clip mean for flats
