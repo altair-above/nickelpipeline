@@ -6,8 +6,8 @@ from nickelpipeline.convenience.fits_class import Fits_Simple
 
 rawdir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/raw/')
 
-redfiles = reduce_all(rawdir=rawdir, save_inters=True, excl_files=['d1113'], excl_filts=['B'])
-redfiles = reduce_all(file_table_in='reduction_files_table.yml', save_inters=True)
+redfiles = reduce_all(rawdir=rawdir, table_path_out='reduction_files_table2.yml', save_inters=True, excl_files=['d1113'], excl_filts=['B'])
+redfiles = reduce_all(table_path_in='reduction_files_table2.yml', save_inters=True, excl_obj_strs=['109'])
 
 # redfiles = reduce_all(rawdir, True, exclude_files=['d1113'])
 
