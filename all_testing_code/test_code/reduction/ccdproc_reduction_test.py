@@ -7,12 +7,10 @@ from nickelpipeline.convenience.fits_class import Fits_Simple
 rawdir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/raw/')
 
 redfiles = reduce_all(rawdir, True, exclude_files=['d1113'], exclude_obj_strs=['109', 'focus'])
+# redfiles = reduce_all(rawdir, True, exclude_files=['d1113'])
 
-# rawdir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/raw/')
+# display_many_nickel(redfiles)
 
-redfiles = reduce_all(rawdir, True, exclude_files=['d1113'])
-
-display_many_nickel(redfiles)
 
 # images = [Fits_Simple(image) for image in rawdir.iterdir()]
 # images = [image.path for image in images if image.object == 'Flat']

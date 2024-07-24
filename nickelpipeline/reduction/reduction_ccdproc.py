@@ -7,7 +7,6 @@ import pandas as pd
 
 from astropy.io import fits
 from astropy.nddata import CCDData
-from astropy.units.quantity import Quantity
 import astropy.units as u
 import ccdproc
 
@@ -52,10 +51,10 @@ def create_exclusion_func(exclude_list, mode='str'):
     return exclude_func
 
 
-def reduce_all(rawdir, save_inters=False, exclude_files=None, exclude_obj_strs=None):
+def reduce_all(rawdir, save_inters=False, exclude_files=None, 
+               exclude_obj_strs=None, exclude_filters=None):
     # exclude = list of file stems (i.e. not .fits) from rawdir to be excluded
-    #########exlude by object name as well?
-    # exclude by range
+    # exclude by range??
     
     if not isinstance(rawdir, Path):
         rawdir = Path(rawdir)
@@ -94,6 +93,10 @@ def reduce_all(rawdir, save_inters=False, exclude_files=None, exclude_obj_strs=N
     exclude_obj_strs.append(focus_label)
     exclude_func = create_exclusion_func(exclude_obj_strs, mode='str')
     file_df = file_df.copy()[file_df.objects.apply(exclude_func)]
+    logger.info(f"Excluded files with {exclude_obj_strs} in the object name")
+    
+    exclude_func = create_exclusion_func(exclude_filters, mode='str')
+    file_df = file_df.copy()[file_df.filts.apply(exclude_func)]
     logger.info(f"Excluded files with {exclude_obj_strs} in the object name")
 
     logger.info(f"Intializing CCDData objects & removing cosmic rays")
@@ -155,22 +158,13 @@ def reduce_all(rawdir, save_inters=False, exclude_files=None, exclude_obj_strs=N
 
 def init_ccddata(frame):
     ccd = CCDData.read(frame, unit=u.adu)
-    # print(ccd.unit)
-    # print(ccd.data)
-    # ccd.data = Quantity(ccd.data, unit='adu')
-    # # print(ccd.data)
-    # print(ccd.unit)
-    # print(ccd.data.unit)
-    # print(ccd.data)
     ccd.mask = nickel_fov_mask_cols_only
     ccd = ccdproc.cosmicray_lacosmic(ccd, gain_apply=False, gain=gain, 
                                      readnoise=read_noise, verbose=False)
+    # Bug in cosmicray_lacosmic returns CCDData.data as a Quanity with incorrect
+    # units electron/ADU if gain_apply=True. Therefore, we manually apply gain,
+    # and leave ccd.data as a numpy array
     ccd.data = ccd.data * gain #* u.electron
-    # print(ccd.unit)
-    # print(ccd.data.unit)
-    # print(ccd.data)
-    # print(type(ccd.data))
-    # ccd.data.unit = ccd.data
     return ccd
 
 

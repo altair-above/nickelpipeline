@@ -176,6 +176,8 @@ NEXT BIG STEP
     - Use scriptbase
     - Rerun pip install every time adding script to setup.cfg
     - eep main simple
+- docstrings!!
+- ccdproc issue explanation
 4. Adding more contorl (what name for reduced directory, what files get processed)
     - Store which biases, flats, etc. to use in a file?
 5. docs
@@ -216,3 +218,11 @@ ccd.unit = electrons, but ccd.data.unit = electrons/ADU
 
 bug in ccdproc -- when gain_apply = True, the units are wrong (electron/adu vs electrons)
 bc cleanarr being passed to the gain_apply function with no units
+
+search ccdproc for gain_apply error
+
+
+astropy table writing (use ascii.fixed_width format)
+
+presentation pipeline -> camera analysis
+real time presentation of pipeline?
