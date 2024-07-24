@@ -86,17 +86,17 @@ focus_label = 'focus'
 #     #     file_table['Path'] = file_df.paths
 #     #     file_table.write(file_table_out, format='ascii.fixed_width')
     
-#     exclude_func = create_exclusion_func(excl_files, mode='path')
-#     file_df = file_df.copy()[file_df.paths.apply(exclude_func)]
+#     excl_func = create_exclusion_func(excl_files, mode='path')
+#     file_df = file_df.copy()[file_df.paths.apply(excl_func)]
 #     logger.info(f"Excluded files {excl_files}")
     
 #     excl_obj_strs.append(focus_label)
-#     exclude_func = create_exclusion_func(excl_obj_strs, mode='str')
-#     file_df = file_df.copy()[file_df.objects.apply(exclude_func)]
+#     excl_func = create_exclusion_func(excl_obj_strs, mode='str')
+#     file_df = file_df.copy()[file_df.objects.apply(excl_func)]
 #     logger.info(f"Excluded files with {excl_obj_strs} in the object name")
     
-#     exclude_func = create_exclusion_func(excl_filts, mode='str')
-#     file_df = file_df.copy()[file_df.filts.apply(exclude_func)]
+#     excl_func = create_exclusion_func(excl_filts, mode='str')
+#     file_df = file_df.copy()[file_df.filts.apply(excl_func)]
 #     logger.info(f"Excluded files with {excl_obj_strs} in the object name")
 
 #     # Create CCDData objects
@@ -224,10 +224,10 @@ def get_master_flats(file_df, save=True, save_dir=None):
         flattype = dome_flat_label
     logger.debug(f"Using flat type '{flattype}'")
     
-    filts = list(set(file_df.filts[file_df.objects == flattype]))
+    filts = list(set(file_df.filters[file_df.objects == flattype]))
     master_flats = {}
     for filt in filts:
-        flat_df = file_df.copy()[(file_df.objects == flattype) & (file_df.filts == filt)]
+        flat_df = file_df.copy()[(file_df.objects == flattype) & (file_df.filters == filt)]
         logger.info(f"Using {len(flat_df.files)} flat frames: {[path.name.split('_')[0] for path in flat_df.paths]}")
 
         master_flat = stack_frames(flat_df.files, frame_type='flat')
@@ -267,50 +267,18 @@ def create_exclusion_func(exclude_list, mode='str'):
         return lambda _: True
     if mode == 'str':
         exclude_list = [norm_str(obj_str) for obj_str in exclude_list]
-    def exclude_func(target):
-        if mode == 'path':
-            target = target.name
-        for excluded_str in exclude_list:
-            if excluded_str in target:
-                return False
-        return True
-    return exclude_func
-
-
-# def include_file(object, mode, exclude_all):
-#     if norm_str(object) == mode:
-#         return True
-    
-#     if mode == 'BIAS':
-#         pass
-#     elif mode == 'DOMEFLAT':
-#         pass
-#     elif mode == 'SKYFLAT':
-#         if norm_str(object) == 'FLAT':
-#             return True
-#     elif mode == 
-
+    def excl_func(target):
+        # if mode == 'path':
+        #     target = target.name
+        target_str = target.name if mode == 'path' else target
+        is_excluded = any(excluded_str in target_str for excluded_str in exclude_list)
+        return not is_excluded
+    return excl_func
 
 
 
 def main():
     
-    # parfile = 'rdx.toml'
-    # with open(parfile, 'rb') as f:
-    #     par = tomllib.load(f)
-
-    # check_par(par)
-
-    # bias_groups = sort(par, 'bias')
-    # flat_groups = sort(par, 'flat')
-    # object_groups = sort(par, 'object')
-
-    # # Process the biases
-    # for key, frames in bias_groups.items():
-    #     stacked_bias = proc_bias(par, frames, save=True)
-
-    #     embed()
-    #     exit()
     return
     
 
@@ -320,8 +288,8 @@ def main():
 
 
 
-def reduce_all(rawdir=None, file_table_in=None, file_table_out='reduction_files_table', save_inters=False, 
-               excl_files=None, excl_obj_strs=None, excl_filts=None):
+def reduce_all(rawdir=None, file_table_in=None, file_table_out='reduction_files_table.yml', save_inters=False, 
+               excl_files=[], excl_obj_strs=[], excl_filts=[]):
     # exclude = list of file stems (i.e. not .fits) from rawdir to be excluded
     # exclude by range??
     
@@ -372,12 +340,13 @@ def reduce_all(rawdir=None, file_table_in=None, file_table_out='reduction_files_
     logger.info("Performing flat division")
     all_red_paths = []
     for filt in master_flats.keys():
-        scienceobjects = list(set(scifile_df.objects[scifile_df.filts == filt]))
+        logger.debug(f"{filt} Filter:")
+        scienceobjects = list(set(scifile_df.objects[scifile_df.filters == filt]))
         
         for scienceobject in scienceobjects:
             # Take the subset of scifile_df containing scienceobject in filter filt
             sub_scifile_df = scifile_df.copy()[(scifile_df.objects == scienceobject) &
-                                        (scifile_df.filts == filt)]
+                                        (scifile_df.filters == filt)]
             # Make a new directory for each science target / filter combination
             sci_dir = reddir / (scienceobject + '_' + filt)
             
@@ -385,7 +354,6 @@ def reduce_all(rawdir=None, file_table_in=None, file_table_out='reduction_files_
             sub_scifile_df.files = [ccdproc.flat_correct(scifile, master_flats[filt]) 
                          for scifile in sub_scifile_df.files]
             
-            logger.info(f"{filt} Filter - Saving {len(sub_scifile_df.files)} fully reduced {scienceobject} images to {sci_dir}")
             red_paths = save_results(sub_scifile_df, 'red', sci_dir)
             all_red_paths += red_paths
     
@@ -395,78 +363,118 @@ def reduce_all(rawdir=None, file_table_in=None, file_table_out='reduction_files_
 
 
 def organize_files(rawdir=None, 
-                   file_table_in=None, file_table_out='reduction_files_table.txt',
-                   excl_files=None, excl_obj_strs=None, excl_filts=None):
+                   file_table_in=None, file_table_out='reduction_files_table.yml',
+                   excl_files=[], excl_obj_strs=[], excl_filts=[]):
 
     if file_table_in is not None:
         # Extract raw files (as paths) from astropy Table file
         logger.info(f"---- reduce_all() called on Astropy table file {file_table_in}")
         file_table = Table.read(file_table_in, format='ascii.fixed_width')
-        rawfiles = [Path(file_path) for file_path in file_table['Path']]
-        logger.info(f"{len(rawfiles)} raw files extracted from table file")
+        ###### rawfiles = [Path(file_path) for file_path in file_table['paths']]
+        file_df = file_table.to_pandas()
+        file_df.insert(1, "files", file_df.paths)
+        file_df.paths = [Path(file_path) for file_path in file_df.paths]
+        logger.info(f"{len(file_df.paths)} raw files extracted from table file")
     else:
         # Extract raw files (as paths) from directory
         logger.info(f"---- reduce_all() called on directory {rawdir}")
         rawfiles = [file for file in Path(rawdir).iterdir() if (file.is_file())]
         logger.info(f"{len(rawfiles)} raw files extracted from raw directory")
     
-    # Create DataFrame for files
-    obj_list = []
-    filt_list = []
-    for file in rawfiles:
-        hdul = fits.open(str(file))
-        obj_list.append(norm_str(hdul[0].header["OBJECT"]))
-        filt_list.append(hdul[0].header["FILTNAM"])
-        hdul.close()
+        # Create DataFrame for files
+        obj_list = []
+        filt_list = []
+        for file in rawfiles:
+            hdul = fits.open(str(file))
+            obj_list.append(norm_str(hdul[0].header["OBJECT"]))
+            filt_list.append(hdul[0].header["FILTNAM"])
+            hdul.close()
 
-    file_df = pd.DataFrame({
-        "names": [file.name for file in rawfiles],
-        "files": None,
-        "objects": obj_list,
-        "filts": filt_list,
-        "paths": rawfiles
-        })
+        file_df = pd.DataFrame({
+            "names": [file.stem for file in rawfiles],
+            "files": rawfiles,
+            "objects": obj_list,
+            "filters": filt_list,
+            "paths": rawfiles
+            })
     
-    if file_table_in is None:
-        file_table = Table()
-        file_table['Name'] = file_df.names
-        file_table['Object'] = file_df.objects
-        file_table['Filter'] = file_df.filts
-        file_table['Path'] = file_df.paths
+        logger.info(f"Saving table of file data to {file_table_out}")
+        logger.debug(f"Default output file path is .yml for ease of commentting out files")
+        file_table = Table.from_pandas(file_df)
+        file_table.remove_column('files')
+        # file_table['Name'] = file_df.names
+        # file_table['Object'] = file_df.objects
+        # file_table['Filter'] = file_df.filters
+        # file_table['Path'] = file_df.paths
         file_table.write(file_table_out, format='ascii.fixed_width', overwrite=True)
     
-    excl_file_names = []
+    all_excl_file_names = []
     
-    exclude_func = create_exclusion_func(excl_files, mode='path')
-    file_df = file_df.copy()[file_df.paths.apply(exclude_func)]
-    excl_file_names += file_df[file_df.paths.apply(lambda x: not exclude_func(x))].names
-    logger.info(f"Excluded files {excl_files}")
+    excl_func = create_exclusion_func(excl_files, mode='path')
+    excl_file_names = list(file_df.names[file_df.paths.apply(lambda x: not excl_func(x))])
+    all_excl_file_names += excl_file_names
+    file_df = file_df.copy()[file_df.paths.apply(excl_func)]
+    logger.info(f"Manually excluded files with names {excl_file_names}")
     
-    excl_obj_strs.append(focus_label)
-    exclude_func = create_exclusion_func(excl_obj_strs, mode='str')
-    file_df = file_df.copy()[file_df.objects.apply(exclude_func)]
-    excl_file_names += file_df[file_df.paths.apply(lambda x: not exclude_func(x))].names
-    logger.info(f"Excluded files with {excl_obj_strs} in the object name")
+    excl_func = create_exclusion_func(excl_obj_strs, mode='str')
+    excl_file_names = list(file_df.names[file_df.objects.apply(lambda x: not excl_func(x))])
+    all_excl_file_names += excl_file_names
+    file_df = file_df.copy()[file_df.objects.apply(excl_func)]
+    logger.info(f"Manually excluded files with {excl_obj_strs} in the object name: {excl_file_names}")
     
-    exclude_func = create_exclusion_func(excl_filts, mode='str')
-    file_df = file_df.copy()[file_df.filts.apply(exclude_func)]
-    excl_file_names += file_df[file_df.paths.apply(lambda x: not exclude_func(x))].names
-    logger.info(f"Excluded files with filters {excl_filts}")
+    excl_func = create_exclusion_func(excl_filts, mode='str')
+    excl_file_names = list(file_df.names[file_df.filters.apply(lambda x: not excl_func(x))])
+    all_excl_file_names += excl_file_names
+    file_df = file_df.copy()[file_df.filters.apply(excl_func)]
+    logger.info(f"Manually excluded files with {excl_filts} filters: {excl_file_names}")
     
-    comment_out_rows(excl_file_names, file_table_out)
-    
+    excl_func = create_exclusion_func([focus_label], mode='str')
+    excl_file_names = list(file_df.names[file_df.objects.apply(lambda x: not excl_func(x))])
+    all_excl_file_names += excl_file_names
+    file_df = file_df.copy()[file_df.objects.apply(excl_func)]
+    logger.info(f"Automatically excluding files with 'Focus' in the object name: {excl_file_names}")
+
+    if file_table_in is None:
+        already_excl_lines = comment_out_rows(all_excl_file_names, file_table_out, modify=True)
+        logger.info(f"In {file_table_out}, commenting out ('#') manually excluded files")
+    else:
+        already_excl_lines = comment_out_rows(all_excl_file_names, file_table_out, modify=False)
+        logger.info(f"Automatically excluding files already commented out in the table file: {already_excl_lines}")
+        logger.debug(f"Since file_table_in has been provided, the table file is not modified to comment out manual exclusions {all_excl_file_names}")
+
     return file_df
 
 
-def comment_out_rows(excl_file_names, table_file):
+# def comment_out_rows(excl_file_names, table_file):
+    
+#     with open(table_file, 'r') as f:
+#         lines = f.readlines()
+    
+#     lines = ['#' + line if any(name in line and not line.strip().startswith('#') 
+#                                for name in excl_file_names) 
+#              else line 
+#              for line in lines]
+    
+#     with open(table_file, 'w') as f:
+#         f.writelines(lines)
+
+def comment_out_rows(excl_file_names, table_file, modify=True):
     
     with open(table_file, 'r') as f:
         lines = f.readlines()
     
-    lines = ['#' + line if any(name in line and not line.strip().startswith('#') 
-                               for name in excl_file_names) 
-             else line 
-             for line in lines]
+    new_lines = []
+    already_excl_lines = []
+    for line in lines:
+        if line.strip().startswith('#'):
+            already_excl_lines.append(line.split('|')[1].split(' ')[1])
+            new_lines.append(line)
+        elif any(file_name in line for file_name in excl_file_names):
+            new_lines.append('#' + line)
+        else:
+            new_lines.append(line)
     
     with open(table_file, 'w') as f:
-        f.writelines(lines)
+        f.writelines(new_lines)
+    
+    return already_excl_lines

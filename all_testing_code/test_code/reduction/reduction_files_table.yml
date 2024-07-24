@@ -1,4 +1,4 @@
-|  Name |     Object |   Filter |                                                                                                                        Path |
+| names |    objects |  filters |                                                                                                                       paths |
 | d1001 |       TEST | 6563/100 | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1001.fits |
 | d1002 |       BIAS | 6563/100 | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1002.fits |
 | d1003 |       BIAS | 6563/100 | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1003.fits |
@@ -111,7 +111,7 @@
 | d1110 |       FLAT |        R | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1110.fits |
 | d1111 |       FLAT |        R | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1111.fits |
 | d1112 |       FLAT |        R | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1112.fits |
-| d1113 |       FLAT |        R | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1113.fits |
+#| d1113 |       FLAT |        R | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1113.fits |
 | d1114 |       FLAT |        R | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1114.fits |
 | d1115 |       FLAT |        R | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1115.fits |
 | d1116 |       FLAT |        B | C:\Users\allis\Documents\2024-2025_Local\Akamai_Internship\nickelpipeline\all_testing_code\test-data-06-26-2\raw\d1116.fits |
