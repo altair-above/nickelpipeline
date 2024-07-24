@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.ma as ma
+import re
 import matplotlib.pyplot as plt
 from matplotlib.path import Path as matPath
 from astropy.io import fits
@@ -68,7 +69,7 @@ class Fits_Simple:
             self.masked_array = ma.masked_array(self.data, self.mask)
             
             try:
-                self.image_num = int(self.filename[2:5])
+                self.image_num = extract_number(self.filename)
                 self.object = self.header["OBJECT"]
                 self.filtnam = self.header["FILTNAM"]
                 self.exptime = self.header["EXPTIME"]
@@ -112,6 +113,12 @@ class Fits_Simple:
             plt.gcf().set_dpi(300)
             plt.colorbar()
             plt.show()
+
+
+def extract_number(input_string):
+    # Use regular expression to find all digits in the string
+    numbers = re.findall(r'\d+', input_string)
+    return int(''.join(numbers))
 
 
 def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_mask: list) -> ma.MaskedArray:
