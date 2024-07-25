@@ -1,29 +1,25 @@
 
 from pathlib import Path
 from IPython import embed
-import warnings
 import numpy as np
 import pandas as pd
+import logging
+import warnings
 
 from astropy.io import fits
 from astropy.nddata import CCDData
 from astropy.table import Table
+from astropy.wcs.wcs import FITSFixedWarning
 import astropy.units as u
 import ccdproc
 
-from nickelpipeline.convenience.nickel_data import gain, read_noise
+from nickelpipeline.convenience.nickel_data import (gain, read_noise, bias_label, 
+                                                    dome_flat_label, sky_flat_label,
+                                                    dark_label, focus_label)
 from nickelpipeline.convenience.fits_class import nickel_fov_mask_cols_only
-from nickelpipeline.convenience.log import default_logger
 
-module_name = __name__.split('.')[-1]
-logger = default_logger(module_name)
+logger = logging.getLogger(__name__)
 
-# Labels for different types of astronomical frames
-bias_label = 'Bias'
-dome_flat_label = 'Dome flat'
-sky_flat_label = 'Flat'
-dark_label = 'dark'
-focus_label = 'focus'
 
 def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_table.yml',
                save_inters=False, excl_files=[], excl_obj_strs=[], excl_filts=[]):
@@ -55,6 +51,7 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
     
     # Initialize CCDData objects and remove cosmic rays
     logger.info("Initializing CCDData objects & removing cosmic rays")
+    warnings.simplefilter("ignore", category=FITSFixedWarning)
     ccd_objs = [init_ccddata(file) for file in file_df.files]
     file_df.files = ccd_objs
     
@@ -116,7 +113,7 @@ def organize_files(rawdir, table_path_in, table_path_out,
     to / draws information from a table file, and comments out files to be excluded.
 
     Args:
-        rawdir (Path or None): Directory to scan for raw FITS files.
+        rawdir (str or None): Directory to scan for raw FITS files.
         table_path_in (str or None): Path to input table file with raw FITS file information.
         table_path_out (str): Path to output table file for storing the raw FITS file information.
         excl_files (list): List of file stems to exclude (exact match not necessary).
@@ -126,7 +123,9 @@ def organize_files(rawdir, table_path_in, table_path_out,
     Returns:
         pd.DataFrame: DataFrame containing organized file information.
     """
+    table_path_out = Path(table_path_out)
     if table_path_in is not None:
+        table_path_in = Path(table_path_in)
         # Extract raw files from an astropy Table file
         logger.info(f"---- reduce_all() called on Astropy table file {table_path_in}")
         file_table = Table.read(table_path_in, format='ascii.fixed_width')
@@ -136,9 +135,10 @@ def organize_files(rawdir, table_path_in, table_path_out,
         file_df.paths = [Path(file_path) for file_path in file_df.paths]
         logger.info(f"{len(file_df.paths)} raw files extracted from table file")
     else:
+        rawdir = Path(rawdir)
         # Extract raw files from the specified directory
         logger.info(f"---- reduce_all() called on directory {rawdir}")
-        rawfiles = [file for file in Path(rawdir).iterdir() if (file.is_file())]
+        rawfiles = [file for file in rawdir.iterdir() if (file.is_file())]
         logger.info(f"{len(rawfiles)} raw files extracted from raw directory")
     
         # Create DataFrame with file metadata
@@ -160,7 +160,7 @@ def organize_files(rawdir, table_path_in, table_path_out,
     
         # Save the table file for future reference
         logger.info(f"Saving table of file data to {table_path_out}")
-        logger.debug(f"Default output file path is .yml for ease of commenting out files")
+        logger.debug(f"You can set output file path to .yml for ease of commenting out files in VS Code")
         file_table = Table.from_pandas(file_df)
         file_table.remove_column('files')
         

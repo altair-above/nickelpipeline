@@ -170,11 +170,7 @@ nickel_mask = add_mask(np.zeros(ccd_shape), bad_columns, bad_triangles,
 # Calculate the padding needed
 pad_height = fov_shape[0] - ccd_shape[0]
 pad_width = fov_shape[1] - ccd_shape[1]
-
-nickel_fov_mask_cols_only = add_mask(np.zeros(ccd_shape), bad_columns, [], []).mask
-nickel_fov_mask = add_mask(np.zeros(ccd_shape), bad_columns, bad_triangles,
-                           bad_rectangles).mask
 # Apply padding
-nickel_fov_mask_cols_only = np.pad(nickel_fov_mask_cols_only, ((0, pad_height), (0, pad_width)), mode='constant', constant_values=0)
-nickel_fov_mask = np.pad(nickel_fov_mask, ((0, pad_height), (0, pad_width)), mode='constant', constant_values=0)
+nickel_fov_mask_cols_only = np.pad(nickel_mask_cols_only, ((0, pad_height), (0, pad_width)), mode='constant', constant_values=0)
+nickel_fov_mask = np.pad(nickel_mask, ((0, pad_height), (0, pad_width)), mode='constant', constant_values=0)
 

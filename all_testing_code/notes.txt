@@ -226,3 +226,6 @@ astropy table writing (use ascii.fixed_width format)
 
 presentation pipeline -> camera analysis
 real time presentation of pipeline?
+
+logger in __init__.py
+add exptime to table, airmass

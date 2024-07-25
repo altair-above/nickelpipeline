@@ -11,11 +11,20 @@ def default_logger(module_name):
 
     # Configure logging with the loaded configuration
     logging.config.dictConfig(config)
-    logger = logging.getLogger(module_name)
-    return logger
+    # logger = logging.getLogger(module_name)
+    # return logger
 
 # Load the JSON configuration from a file within a package
 def load_logging_config():
     with pkg_resources.resource_stream('nickelpipeline.convenience', 'logging_config.json') as f:
         config = json.load(f)
     return config
+
+def change_log_file(logger, log_path):
+    # Change the filename of the file handler
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            handler.baseFilename = log_path
+            # Close the old stream and open a new one
+            handler.close()
+            handler.stream = open(handler.baseFilename, handler.mode, encoding=handler.encoding)

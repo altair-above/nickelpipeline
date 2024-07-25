@@ -1,13 +1,25 @@
 from pathlib import Path
-from nickelpipeline.reduction.reduction_ccdproc import reduce_all
+from nickelpipeline.reduction.reduction import reduce_all
 from nickelpipeline.convenience.display_fits import display_many_nickel
 from nickelpipeline.convenience.fits_class import Fits_Simple
 
+import pkg_resources
+import json
+import logging.config
+
+# Load the JSON configuration from a file
+with pkg_resources.resource_stream('nickelpipeline.convenience', 'logging_config.json') as f:
+    config = json.load(f)
+    print(config)
+
+logging.config.dictConfig(config)
+logger = logging.getLogger(__name__)
 
 rawdir = Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/raw/')
 
-redfiles = reduce_all(rawdir=rawdir, table_path_out='reduction_files_table2.yml', save_inters=True, excl_files=['d1113'], excl_filts=['B'])
-redfiles = reduce_all(table_path_in='reduction_files_table2.yml', save_inters=True, excl_obj_strs=['109'])
+logger.info("Running reduce_all")
+redfiles = reduce_all(rawdir=rawdir, table_path_out='reduction_files_table2.tbl', save_inters=True, excl_files=['d1113'], excl_filts=['B'])
+redfiles = reduce_all(table_path_in='reduction_files_table2.tbl', save_inters=True, excl_obj_strs=['109'])
 
 # redfiles = reduce_all(rawdir, True, exclude_files=['d1113'])
 
