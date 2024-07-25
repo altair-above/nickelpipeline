@@ -2,7 +2,6 @@ import pkg_resources
 import json
 import logging.config
 
-
 def default_logger(module_name):
 
     # Load the JSON configuration from a file
@@ -28,3 +27,16 @@ def change_log_file(logger, log_path):
             # Close the old stream and open a new one
             handler.close()
             handler.stream = open(handler.baseFilename, handler.mode, encoding=handler.encoding)
+
+def adjust_global_logger(log_level='INFO', output_file='default_log.log'):
+
+    # Load the JSON configuration from a file
+    with pkg_resources.resource_stream('nickelpipeline.convenience', 'logging_config.json') as f:
+        config = json.load(f)
+        config['handlers']['file']['filename'] = output_file
+        config['handlers']['console']['level'] = log_level
+        # config['root']['level'] = log_level
+
+    # Configure logging with the loaded configuration
+    logging.config.dictConfig(config)
+

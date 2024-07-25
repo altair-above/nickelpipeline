@@ -21,7 +21,7 @@
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "detailed",
-            "filename": "logs/placeholder.log",
+            "filename": "default_log.log",
             "mode": "a",
             "encoding": "utf-8",
             "maxBytes": 1000000,
@@ -30,13 +30,13 @@
     },
     "loggers": {
         "__name__": {
-            "level": "INFO",
+            "level": "DEBUG",
             "handlers": ["console", "file"],
             "propagate": false
         }
     },
     "root": {
-        "level": "INFO",
+        "level": "DEBUG",
         "handlers": ["console", "file"]
     },
     "disable_existing_loggers": false

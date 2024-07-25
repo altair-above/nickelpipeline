@@ -179,17 +179,17 @@ def organize_files(rawdir, table_path_in, table_path_out,
     # Exclude by file name (excludes file if any str in excl_files is in the file name)
     file_df, excluded_file_names = exclude(excl_files, file_df, file_df.names)
     all_excluded_file_names += excluded_file_names
-    logger.info(f"Manually excluded files with names {excluded_file_names}")
+    logger.info(f"Manually excluding files with names {excluded_file_names}")
     
     # Exclude by object name (excludes file if any str in excl_obj_strs is in object name)
     file_df, excluded_file_names = exclude(excl_obj_strs, file_df, file_df.objects)
     all_excluded_file_names += excluded_file_names
-    logger.info(f"Manually excluded files with {excl_obj_strs} in object name: {excluded_file_names}")
+    logger.info(f"Manually excluding files with {excl_obj_strs} in object name: {excluded_file_names}")
     
     # Exclude by filter (excludes file if any str in excl_filts is in filter name)
     file_df, excluded_file_names = exclude(excl_filts, file_df, file_df.filters)
     all_excluded_file_names += excluded_file_names
-    logger.info(f"Manually excluded files with {excl_filts} filters: {excluded_file_names}")
+    logger.info(f"Manually excluding files with {excl_filts} filters: {excluded_file_names}")
     
     # Exclude all focus images automatically (excludes file if 'focus' is in object name)
     file_df, excluded_file_names = exclude([focus_label], file_df, file_df.objects)
