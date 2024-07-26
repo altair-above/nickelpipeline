@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from pathlib import Path
+import logging
 
 from loess.loess_2d import loess_2d
 
@@ -18,6 +19,7 @@ from nickelpipeline.convenience.dir_nav import unzip_directories, categories_fro
 from nickelpipeline.convenience.graphs import smooth_contour, scatter_sources
 from nickelpipeline.convenience.nickel_data import plate_scale_approx    # For the Nickel Telescope original camera
 
+logger = logging.getLogger(__name__)
 
 def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False, 
                           subplot_size=70, include_smooth=True, include_srcs=False):
@@ -43,8 +45,7 @@ def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False,
         
         # Convert float category of form 1.375 to a string 1_375
         category_str = str(category).replace('.', '_')
-        if verbose: 
-            print(f"Working on fit map for category {category}")
+        logger.info(f"Working on fit map for category {category}")
         
         # Create a figure for plotting
         fig = plt.figure()
@@ -60,8 +61,7 @@ def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False,
         # Plot the smoothed fit field map
         #------------------------------------------------------------
         if include_smooth:
-            if verbose: 
-                print("Starting smoothed fit field map plotting")
+            logger.info("Starting smoothed fit field map plotting")
             # Get smoothed parameters
             smooth_pars, _, _ = get_smoothed_pars(source_coords, source_pars, frac=frac,
                                                   subplot_size=subplot_size, verbose=verbose)
@@ -82,8 +82,7 @@ def fit_field_by_category(path_list, condition_tuples, frac=0.5, verbose=False,
         # Plot the sources' fit field map
         #------------------------------------------------------------
         if include_srcs:
-            if verbose: 
-                print(f"Working on sources plot for category {category}")
+            logger.info(f"Working on sources plot for category {category}")
             
             # Plots the actual fit for every source detected in images
             for coord, source_par in zip(source_coords, source_pars):
@@ -130,12 +129,12 @@ def param_graph_individuals(param_type, path_list, condition_tuples, frac=0.5,
     categories = categories_from_conditions(condition_tuples, images)
     
     for category, file_list in categories.items():
-        print(f"Category: {category}")
+        logger.info(f"Category: {category}")
         for image in file_list:
-            print(f"Image {image}:")
+            logger.info(f"Image {image}:")
             single_param_graph(param_type, [image], str(category), frac, 
                                  verbose, include_smooth, include_srcs)
-        print("------------------")
+        logger.info("------------------")
 
 
 def single_param_graph(param_type, file_list, category, frac=0.5,
@@ -153,8 +152,7 @@ def single_param_graph(param_type, file_list, category, frac=0.5,
         include_smooth (bool): Whether to include smoothed parameter contour graph.
         include_srcs (bool): Whether to include source parameter contour graph.
     """
-    if verbose: 
-        print(f"Working on {param_type} map for category {category}")
+    logger.info(f"Working on {param_type} map for category {category}")
     
     # Convert float category of form 1.375 to a string 1_375
     category_str = str(category).replace('.', '_')
@@ -177,15 +175,13 @@ def single_param_graph(param_type, file_list, category, frac=0.5,
 
     # Plot the smoothed parameter contour graph
     if include_smooth:
-        if verbose: 
-            print(f"Working on smoothed contour plot for category {category}")
+        logger.info(f"Working on smoothed contour plot for category {category}")
         ax, cp = smooth_contour(x_list, y_list, source_param_list, 
                                 color_range, ax, frac, title, category_str)
     
     # Plot the sources' parameters
     if include_srcs:
-        if verbose: 
-            print(f"Working on sources plot for category {category}")
+        logger.info(f"Working on sources plot for category {category}")
         ax, cmap = scatter_sources(x_list, y_list, source_param_list, 
                                 color_range, ax, title, category_str)
     

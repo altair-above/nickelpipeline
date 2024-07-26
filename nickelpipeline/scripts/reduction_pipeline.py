@@ -28,11 +28,11 @@ class ReductionPipeline(scriptbase.ScriptBase):
                             help='List of filter substrings to exclude (exact match not necessary).')
         parser.add_argument('-d', '--display', action='store_true', 
                             help="Display reduced images")
-        parser.add_argument('-v', '--verbose', action='store_true', 
-                            help="Display debug-level logs (use --log_level for finer control)")
-        parser.add_argument('--log_level', default='INFO', type=str,
-                            help='Level of logs to display; overrides --verbose', 
-                            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
+        parser.add_argument('-vv', '--very_verbose', action='store_true', 
+                            help="Display most detailed logs (use --verbosity for finer control)")
+        parser.add_argument('--verbosity', default=4, type=str,
+                            help='Level of verbosity to display (5=highest); overrides --verbose', 
+                            choices=[1,2,3,4,5])
         return parser
 
     @staticmethod
@@ -41,17 +41,18 @@ class ReductionPipeline(scriptbase.ScriptBase):
         from nickelpipeline.reduction.reduction import reduce_all
         from nickelpipeline.convenience.display_fits import display_many_nickel
         
-        if args.verbose:
-            args.log_level = 'DEBUG'
-        adjust_global_logger(args.log_level, f"{__name__.split('.')[-1]}_log.log")
+        if args.very_verbose:
+            args.verbosity = 5
+        log_levels = {1:'CRITICAL', 2:'ERROR', 3:'WARNING', 4:'INFO', 5:'DEBUG'}
+        adjust_global_logger(log_levels[args.verbosity], __name__)
         logger = logging.getLogger(__name__)
               
         logger.info("Running reduce_all()")
-        redfiles = reduce_all(args.rawdir, args.table_path_in, args.table_path_out,
+        red_files = reduce_all(args.rawdir, args.table_path_in, args.table_path_out,
                               args.save_inters, args.excl_files, args.excl_obj_strs, 
                               args.excl_filts)
         
         if args.display:
-            display_many_nickel(redfiles)
+            display_many_nickel(red_files)
         
         

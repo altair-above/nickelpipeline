@@ -72,7 +72,7 @@ def graph_psf_pars_many(path_list, condition_tuples, verbose=False):
     # Process each category and its file list
     for category, file_list in categories.items():
         # Fit PSFs & extract parameters
-        fwhms, eccs, phis = zip(*(extract_psf_par([file], file.stem, verbose=verbose) 
+        fwhms, eccs, phis = zip(*(extract_psf_par([file], file.name.split('_')[0], verbose=verbose) 
                                   for file in file_list))
         
         # Calculate mean and confidence intervals
@@ -120,7 +120,7 @@ def graph_psf_pars_individuals(path_list, verbose=False):
     images = unzip_directories(path_list, output_format='Fits_Simple')
     
     # Fit PSFs and extract parameters for each image
-    results = [(image.image_num,) + extract_psf_par([image,], image.path.stem, verbose=verbose)
+    results = [(image.image_num,) + extract_psf_par([image,], image.path.name.split('_')[0], verbose=verbose)
                for image in images]
     
     # Sort results based on image numbers
@@ -185,7 +185,7 @@ def extract_psf_single(file):
     Returns:
         tuple: Average FWHM, FWHM eccentricity, and rotation angle phi.
     """
-    return extract_psf_par([file], file.stem, verbose=True)
+    return extract_psf_par([file], file.name.split('_')[0], verbose=True)
 
 def calc_conf_intervals(data_list, confidence_level=0.95):
     """

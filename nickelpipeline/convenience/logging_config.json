@@ -21,7 +21,7 @@
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "detailed",
-            "filename": "default_log.log",
+            "filename": "log_all_others.log",
             "mode": "a",
             "encoding": "utf-8",
             "maxBytes": 1000000,
