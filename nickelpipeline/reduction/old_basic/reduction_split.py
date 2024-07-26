@@ -3,9 +3,9 @@ import pandas as pd
 from astropy.io import fits
 from pathlib import Path
 
-from nickelpipeline.reduction.overscan_subtraction import overscan_subtraction
-from nickelpipeline.reduction.bias_subtraction import bias_subtraction
-from nickelpipeline.reduction.flat_division import flat_division
+from nickelpipeline.reduction.old_basic.overscan_subtraction import overscan_subtraction
+from nickelpipeline.reduction.old_basic.bias_subtraction import bias_subtraction
+from nickelpipeline.reduction.old_basic.flat_division import flat_division
 from nickelpipeline.convenience.dir_nav import unzip_directories
 
 

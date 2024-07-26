@@ -7,11 +7,14 @@ from astropy.io import fits
 from astropy.visualization import ZScaleInterval
 from pathlib import Path
 from typing import Union
+import logging
 
 from nickelpipeline.convenience.nickel_data import (ccd_shape, fov_shape, bad_columns, 
                                                     bad_triangles, bad_rectangles)
 
         
+logger = logging.getLogger(__name__)
+
 class Fits_Simple:
     """
     A simple class to handle FITS files.
@@ -56,29 +59,73 @@ class Fits_Simple:
             self.path = image_path
             self.filename = image_path.stem
         
-            with fits.open(image_path) as hdul:
-                self.header = hdul[0].header
-                self.data = hdul[0].data
-                try:
-                    self.mask = hdul['MASK'].data
-                except KeyError:
-                    if all(self.data.shape == ccd_shape):
-                        self.mask = nickel_mask
-                    elif all(self.data.shape == fov_shape):
-                        self.mask = nickel_fov_mask
-            self.masked_array = ma.masked_array(self.data, self.mask)
+            # with fits.open(image_path) as hdul:
+            #     self.header = hdul[0].header
+            #     self.data = hdul[0].data
+            #     try:
+            #         self.mask = hdul['MASK'].data
+            #     except KeyError:
+            #         if all(self.data.shape == ccd_shape):
+            #             self.mask = nickel_mask
+            #         elif all(self.data.shape == fov_shape):
+            #             self.mask = nickel_fov_mask
+            # self.masked_array = ma.masked_array(self.data, self.mask)
             
+            # try:
+            #     self.image_num = extract_number(self.filename)
+            #     self.object = self.header["OBJECT"]
+            #     self.filtnam = self.header["FILTNAM"]
+            #     self.exptime = self.header["EXPTIME"]
+            # except:
+            #     # For FITS images with limited header information
+            #     self.image_num = None
+            #     self.object = None
+            #     self.filtnam = None
+            #     self.exptime = None
+    
+    @property
+    def header(self):
+        with fits.open(self.path) as hdul:
+            return hdul[0].header
+    
+    @property
+    def data(self):
+        with fits.open(self.path) as hdul:
+            return hdul[0].data
+        
+    @property
+    def mask(self):
+        with fits.open(self.path) as hdul:
             try:
-                self.image_num = extract_number(self.filename)
-                self.object = self.header["OBJECT"]
-                self.filtnam = self.header["FILTNAM"]
-                self.exptime = self.header["EXPTIME"]
-            except:
-                # For FITS images with limited header information
-                self.image_num = None
-                self.object = None
-                self.filtnam = None
-                self.exptime = None
+                return hdul['MASK'].data
+            except KeyError:
+                logger.debug('No mask in fits file; returning default mask')
+                if all(self.data.shape == ccd_shape):
+                    return nickel_mask
+                elif all(self.data.shape == fov_shape):
+                    return nickel_fov_mask
+    
+    @property
+    def masked_array(self):
+        plt.imshow(self.mask)
+        plt.show()
+        return ma.masked_array(self.data, self.mask)
+
+    @property
+    def image_num(self):
+        # Use regular expression to find all digits in the string
+        numbers = re.findall(r'\d+', self.filename)
+        return int(''.join(numbers))
+    
+    @property
+    def object(self):
+        return self.header["OBJECT"]
+    @property
+    def filtnam(self):
+        return self.header["FILTNAM"]
+    @property
+    def exptime(self):
+        return self.header["EXPTIME"]
     
     def __str__(self) -> str:
         """
@@ -113,12 +160,6 @@ class Fits_Simple:
             plt.gcf().set_dpi(300)
             plt.colorbar()
             plt.show()
-
-
-def extract_number(input_string):
-    # Use regular expression to find all digits in the string
-    numbers = re.findall(r'\d+', input_string)
-    return int(''.join(numbers))
 
 
 def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_mask: list) -> ma.MaskedArray:

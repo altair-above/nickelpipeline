@@ -16,7 +16,7 @@ import ccdproc
 from nickelpipeline.convenience.nickel_data import (gain, read_noise, bias_label, 
                                                     dome_flat_label, sky_flat_label,
                                                     dark_label, focus_label)
-from nickelpipeline.convenience.fits_class import nickel_fov_mask_cols_only
+from nickelpipeline.convenience.fits_class import nickel_fov_mask
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
     bias subtraction, flat division, cosmic ray masking)
 
     Args:
-        rawdir (Path): Directory containing raw FITS files if no table_path_in.
+        rawdir (str or Path): Directory containing raw FITS files if no table_path_in.
         table_path_in (str): Path to input table file with raw FITS file information.
         table_path_out (str): Path to output table file for storing the raw FITS file information.
         save_inters (bool): If True, save intermediate results during processing.
@@ -39,6 +39,8 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
     Returns:
         list: Paths to the saved reduced images.
     """
+    if rawdir is not None:
+        rawdir = Path(rawdir)
     # Organize raw files based on input directory or table
     file_df = organize_files(rawdir, table_path_in, table_path_out, excl_files, excl_obj_strs, excl_filts)
     
@@ -135,7 +137,6 @@ def organize_files(rawdir, table_path_in, table_path_out,
         file_df.paths = [Path(file_path) for file_path in file_df.paths]
         logger.info(f"{len(file_df.paths)} raw files extracted from table file")
     else:
-        rawdir = Path(rawdir)
         # Extract raw files from the specified directory
         logger.info(f"---- reduce_all() called on directory {rawdir}")
         rawfiles = [file for file in rawdir.iterdir() if (file.is_file())]
@@ -253,7 +254,7 @@ def init_ccddata(frame):
         CCDData: Initialized and processed CCDData object.
     """
     ccd = CCDData.read(frame, unit=u.adu)
-    ccd.mask = nickel_fov_mask_cols_only
+    ccd.mask = nickel_fov_mask
     ccd = ccdproc.cosmicray_lacosmic(ccd, gain_apply=False, gain=gain, 
                                      readnoise=read_noise, verbose=False)
     # Apply gain manually due to a bug in cosmicray_lacosmic function

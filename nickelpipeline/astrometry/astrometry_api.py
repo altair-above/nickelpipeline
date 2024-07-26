@@ -118,17 +118,19 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
             if data['status'] == 'success':
                 logger.info('Job succeeded, getting calibrated fits file')
                 return True
-            if data['status'] == 'failed':
+            elif data['status'] == 'failed':
                 logger.warning('Job failed')
                 return False
             if t > 225:
                 logger.warning('Maximum time elapsed... exiting')
                 return False
-            time_check(t, interval)
+            return time_check(t, interval)
         
         success = time_check(0, 15)
+        logger.debug(f"success status = {success}")
         
         if success:
+            logger.debug(f"Trying to save calibrated image & corr")
             # Create path to image folder
             output_path_stem = os.path.basename(image_path)
             
@@ -153,6 +155,7 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
             elif mode == 'corr':
                 return output_path_corr
         else:
+            logger.debug("Saving nothing")
             return None
     
     # Calibrate each image piece and collect output_paths
@@ -164,7 +167,7 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
         elif mode == 'corr':
             output_path = os.path.join(output_dir, output_path_stem[:-5] + '_corr' + '.fits')
         if not resolve and os.path.exists(output_path):
-            logger.info("Returning local copies of astrometric solves; astrometry.net not used")
+            logger.info(f"Returning local copy of {Path(image_path).name}'s solution; astrometry.net not used")
             calibrated_fits_paths.append(output_path)
         else:
             try:

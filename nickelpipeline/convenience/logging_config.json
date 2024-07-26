@@ -29,6 +29,11 @@
         }
     },
     "loggers": {
+        "nickelpipeline": {
+            "level": "DEBUG",
+            "handlers": ["console", "file"],
+            "propagate": false
+        },
         "__name__": {
             "level": "DEBUG",
             "handlers": ["console", "file"],
@@ -36,7 +41,7 @@
         }
     },
     "root": {
-        "level": "DEBUG",
+        "level": "INFO",
         "handlers": ["console", "file"]
     },
     "disable_existing_loggers": false

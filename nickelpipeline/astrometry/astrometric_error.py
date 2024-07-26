@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from matplotlib import cm
 
 from nickelpipeline.astrometry.plate_scale import avg_plate_scale
-from nickelpipeline.astrometry.astrometry_api import run_astrometry
+from nickelpipeline.astrometry.astrometry_api import run_astrometry, get_astrometric_solves
 from nickelpipeline.convenience.nickel_data import plate_scale_approx
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 from nickelpipeline.convenience.graphs import smooth_contour, scatter_sources
@@ -44,8 +44,11 @@ def single_graph_topographic(path_list, category_str="", error_type='error',
     
     images = unzip_directories(path_list, output_format='Path')
     output_dir = str(images[0].parent.parent.parent / 'astrometric')
-    astro_calib_images = run_astrometry(images, output_dir, mode='corr', 
-                                        fast=fast, verbose=verbose)
+    if fast:
+        astro_calib_images = get_astrometric_solves(images, output_dir, mode='corr')
+    else:
+        astro_calib_images = run_astrometry(images, output_dir, mode='corr')
+    
     if len(astro_calib_images) == 0:
         print(f"Astrometry.net failed to calibrate image(s). Cannot graph.")
         return
