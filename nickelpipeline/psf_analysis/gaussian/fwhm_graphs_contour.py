@@ -12,7 +12,6 @@ from nickelpipeline.convenience.graphs import smooth_contour, scatter_sources
 from nickelpipeline.convenience.nickel_data import plate_scale_approx
 from nickelpipeline.astrometry.plate_scale import avg_plate_scale
 
-plate_scale_approx = 0.37   # For the Nickel Telescope
 
 
 # def single_fwhm_contour(directories, files=None, title="", frac=0.3, verbose=False):
@@ -109,6 +108,7 @@ def single_param_graph(param_type, path_list, category_str="", frac=0.3,
     
     if include_smooth:
         if verbose: 
+            print(x_list)
             print(f"Working on smoothed contour plot for category {category_str}")
         ax, cp = smooth_contour(x_list, y_list, param_list, color_range, 
                                 ax, frac, title, category_str)

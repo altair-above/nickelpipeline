@@ -107,8 +107,6 @@ class Fits_Simple:
     
     @property
     def masked_array(self):
-        plt.imshow(self.mask)
-        plt.show()
         return ma.masked_array(self.data, self.mask)
 
     @property

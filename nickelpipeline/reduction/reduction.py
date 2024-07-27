@@ -21,7 +21,7 @@ from nickelpipeline.convenience.fits_class import nickel_fov_mask
 logger = logging.getLogger(__name__)
 
 
-def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_table.yml',
+def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_table.tbl',
                save_inters=False, excl_files=[], excl_obj_strs=[], excl_filts=[]):
     """
     Perform reduction of raw astronomical data frames (overscan subtraction,
@@ -325,7 +325,7 @@ def get_master_bias(file_df, save=True, save_dir=None):
     """
     logger.info("Combining bias files into master bias")
     bias_df = file_df.copy()[file_df.objects == bias_label]
-    logger.info(f"Using {len(bias_df.files)} bias frames: {[file.name.split('_')[0] for file in bias_df.paths]}")
+    logger.info(f"Using {len(bias_df.files)} bias frames: {[file.stem.split('_')[0] for file in bias_df.paths]}")
 
     master_bias = stack_frames(bias_df.files, frame_type='bias')
     
@@ -363,7 +363,7 @@ def get_master_flats(file_df, save=True, save_dir=None):
     # Make a master flat for all filts in which flats have been taken
     for filt in set(file_df.filters[file_df.objects == flattype]):
         flat_df = file_df.copy()[(file_df.objects == flattype) & (file_df.filters == filt)]
-        logger.info(f"Using {len(flat_df.files)} flat frames: {[path.name.split('_')[0] for path in flat_df.paths]}")
+        logger.info(f"Using {len(flat_df.files)} flat frames: {[path.stem.split('_')[0] for path in flat_df.paths]}")
 
         master_flat = stack_frames(flat_df.files, frame_type='flat')
         
@@ -389,7 +389,7 @@ def save_results(scifile_df, modifier_str, save_dir):
     """
     Path.mkdir(save_dir, exist_ok=True)
     logger.info(f"Saving {len(scifile_df.files)} fully reduced {save_dir.name} images to {save_dir}")
-    save_paths = [save_dir / (path.name.split('_')[0] + f"_{modifier_str}" + path.suffix) for path in scifile_df.paths]
+    save_paths = [save_dir / (path.stem.split('_')[0] + f"_{modifier_str}" + path.suffix) for path in scifile_df.paths]
     for file, path in zip(scifile_df.files, save_paths):
         file.write(path, overwrite=True)
     return save_paths

@@ -19,15 +19,13 @@ reddir = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickel
 #                                                    '_B' not in str(dir))]
 directories = [dir for dir in reddir.iterdir() if ('NGC' not in str(dir) and 
                                                    'Focus' not in str(dir))]
-# directories = [reddir.parent.parent / 'test99']
-# directories = [reddir/'110_232_R']
 # fwhm_contour_by_category(directories, conditions_06_26)
 # param_graph_by_category('fwhm residuals', directories, conditions_06_26, 
 #                           include_smooth=True, include_srcs=False)
 param_graph_by_category('fwhm residuals', directories, conditions_06_26, 
-                          include_smooth=True, include_srcs=True)
-param_graph_by_category('fwhm', directories, conditions_06_26, 
-                          include_smooth=True, include_srcs=True)
+                          include_smooth=True, include_srcs=True, verbose=False)
+# param_graph_by_category('fwhm', directories, conditions_06_26, 
+#                           include_smooth=True, include_srcs=True)
 # param_graph_individuals('fwhm residuals', directories, conditions_06_26, 
 #                         include_smooth=True, include_srcs=True)
 # param_graph_individuals('fwhm residuals', directories, conditions_06_26, 

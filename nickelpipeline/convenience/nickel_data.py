@@ -8,6 +8,7 @@ fov_shape = np.array([1024, 1056])
 sat_columns = [255]
 
 bad_columns = [255, 256, 783, 784, 1002]
+bad_photometry_columns = [252, 253, 254, 255, 256, 257, 258, 259, 260, 783, 784, 1002]
 bad_triangles = [((0, 960), (64, 1024), (0, 1024)), ((0, 33), (34, 0), (0, 0))]
 bad_rectangles = []
 

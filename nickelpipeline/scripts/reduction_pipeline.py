@@ -16,7 +16,7 @@ class ReductionPipeline(scriptbase.ScriptBase):
                             help='Directory with raw files to reduce.')
         parser.add_argument('-fin', '--table_path_in', default=None, type=str,
                             help='Path to input table file with raw FITS file information.')
-        parser.add_argument('-fout', '--table_path_out', default='reduction_files_table2.tbl', type=str,
+        parser.add_argument('-fout', '--table_path_out', default='reduction_files_table.tbl', type=str,
                             help='Path to output table file for storing the raw FITS file information.')
         parser.add_argument('-s', '--save_inters', default=False, type=bool,
                             help='If True, save intermediate results during processing.')
