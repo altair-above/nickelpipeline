@@ -94,29 +94,7 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
     sig2fwhm = np.sqrt(8*np.log(2))
     # aper_size = 1.5*default_fwhm/2
 
-    # unmasked_img = image.data
-    # # Mask specific bad columns
-    # column_mask = np.zeros(unmasked_img.shape[1], dtype=bool)
-    # column_mask[bad_columns] = True
-
-    # # Create a masked array with the masked columns
-    # img = np.ma.masked_array(unmasked_img, mask=np.zeros_like(unmasked_img, dtype=bool))
-    # img.mask[:, column_mask] = True
-    
-    # logger.debug(f"mask = \n{img.mask}")
     img = image.masked_array
-    
-    # # Mask top and bottom rows (often have extra sources)
-    # rows_to_mask = np.arange(0, 5).tolist() + np.arange(img.shape[0]-50, img.shape[0]).tolist()
-    # row_mask = np.zeros(img.shape[0], dtype=bool)
-    # row_mask[rows_to_mask] = True
-    # img.mask[row_mask, :] = True
-    
-    # # Mask specific bad columns
-    # column_mask = np.zeros(img.shape[1], dtype=bool)
-    # column_mask[bad_photometry_columns] = True
-    # img.mask[:, column_mask] = True
-    
     img.data[:,bad_columns] = 0
 
     #----------------------------------------------------------------------
@@ -206,20 +184,6 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
         print(f"flux of star chosen = {phot_data['flux_init'][chosen_star]}")
         phot_data = phot_data[indices_by_peak[chosen_star]]
     
-    
-    # indx1 = phot_data['iter_detected'] == 1
-    # indx2 = 0 < phot_data['x_fit']
-    # indx3 = 0 < phot_data['y_fit']
-    # indx4 = phot_data['x_fit'] < ccd_shape[0]
-    # indx5 = phot_data['y_fit'] < ccd_shape[1]
-    # phot_data = phot_data[indx1][indx2][indx3][indx4][indx5]
-
-    # indx1 = phot_data['iter_detected'] == 1
-    # indx2 = 0 < phot_data['x_fit']
-    # indx3 = 0 < phot_data['y_fit']
-    # indx4 = phot_data['x_fit'] < ccd_shape[0]
-    # indx5 = phot_data['y_fit'] < ccd_shape[1]
-    # phot_data = phot_data[indx1][indx2][indx3][indx4][indx5]
     phot_data = filter_phot_data(phot_data)
     psf_fwhm_median = np.median(phot_data['sigma_fit'])*sig2fwhm
     psf_fwhm_std = np.std(phot_data['sigma_fit']*sig2fwhm)

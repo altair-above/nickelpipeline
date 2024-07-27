@@ -85,12 +85,6 @@ def single_param_graph(param_type, path_list, category_str="", frac=0.3,
     
     images = unzip_directories(path_list, output_format='Fits_Simple')
     
-    # Create a figure for plotting
-    fig = plt.figure()
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-    ax.set_xlabel('X (pixels)')
-    ax.set_ylabel('Y (pixels)')
-    
     if param_type == 'fwhm':
         color_range = [1.5, 2.8]    # Optimized for Nickel 06-26-24 data
         title = "FWHM (arcsec)"
@@ -105,6 +99,12 @@ def single_param_graph(param_type, path_list, category_str="", frac=0.3,
     y_list = np.concatenate(y_list)
     param_list = np.concatenate(param_list)
     param_list = param_list * plate_scale_approx
+    
+    # Create a figure for plotting
+    fig = plt.figure()
+    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    ax.set_xlabel('X (pixels)')
+    ax.set_ylabel('Y (pixels)')
     
     if include_smooth:
         if verbose: 
