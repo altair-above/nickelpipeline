@@ -180,6 +180,7 @@ all_testing_code/test_code/psf_analysis/moffat/proc_files
 all_testing_code/graphs
 all_testing_code/old_code
 all_testing_code/test99
+all_testing_code/test_code/photometry/proc_files
 
 *.log.1
 *.log.2

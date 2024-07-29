@@ -50,6 +50,5 @@ class PhotometryPipeline(scriptbase.ScriptBase):
         # calib_files = run_astrometry(red_files, output_dir, 
         #                              mode=args.output_type, )
         
-        return calib_files
         
         

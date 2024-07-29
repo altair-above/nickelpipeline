@@ -158,7 +158,7 @@ class FitMoffat2D:
         p = self.par[self.free]
         result = optimize.least_squares(self.resid, p, method='trf', xtol=1e-12,
                                         bounds=(lb[self.free], ub[self.free]),
-                                        verbose=2) #, jac=self.deriv_resid)
+                                        verbose=0) #, jac=self.deriv_resid)
         self._set_par(result.x)
 
     @staticmethod

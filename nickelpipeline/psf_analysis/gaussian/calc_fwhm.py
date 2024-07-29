@@ -104,6 +104,8 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
     starfind = IRAFStarFinder(fwhm=default_fwhm, threshold=thresh*std,
                               minsep_fwhm=0.1, sky=0.0, peakmax=55000,)
     sources = starfind(data=(img.data - median), mask=img.mask)
+    # if sources is None:
+        
     if verbose:
         print(f'Found {len(sources)} sources in {image}.')
     # This determines the distance of each source to every other
@@ -115,6 +117,7 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
                 + np.square(sources['ycentroid'][:,None]
                             - sources['ycentroid'][None,:]))
     indx = (dist < default_fwhm/1.7) & (j > i)
+    logger.debug(f"{sum(indx)} sources removed for being too close")
     sources = sources[np.logical_not(np.any(indx, axis=0))]
     logger.debug(f"Sources Found (Iter 1): \n{log_astropy_table(sources)}")
 
@@ -190,7 +193,7 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
 
     if plot:
         plot_sources(image, phot_data['x_fit'], phot_data['y_fit'],fwhm)
-    # plot_sources(image, phot_data['x_fit'], phot_data['y_fit'],fwhm)
+    plot_sources(image, phot_data['x_fit'], phot_data['y_fit'],fwhm)
     
     #----------------------------------------------------------------------
     # AperatureStats Analysis

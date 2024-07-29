@@ -57,7 +57,7 @@ class Fits_Simple:
         else:
             image_path = Path(image_path)
             self.path = image_path
-            self.filename = image_path.stem
+            self.filename = image_path.stem.split('_')[0]
         
             # with fits.open(image_path) as hdul:
             #     self.header = hdul[0].header

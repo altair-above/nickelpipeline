@@ -23,7 +23,7 @@ directories = [dir for dir in reddir.iterdir() if ('NGC' not in str(dir) and
 # param_graph_by_category('fwhm residuals', directories, conditions_06_26, 
 #                           include_smooth=True, include_srcs=False)
 param_graph_by_category('fwhm residuals', directories, conditions_06_26, 
-                          include_smooth=True, include_srcs=True, verbose=False)
+                          include_smooth=True, include_srcs=True, verbose=True)
 # param_graph_by_category('fwhm', directories, conditions_06_26, 
 #                           include_smooth=True, include_srcs=True)
 # param_graph_individuals('fwhm residuals', directories, conditions_06_26, 
