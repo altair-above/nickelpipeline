@@ -12,6 +12,7 @@ Submodules
    nickelpipeline.convenience.display_fits
    nickelpipeline.convenience.fits_class
    nickelpipeline.convenience.graphs
+   nickelpipeline.convenience.log
    nickelpipeline.convenience.nickel_data
 
 Module contents

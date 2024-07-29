@@ -12,6 +12,7 @@ Subpackages
    nickelpipeline.convenience
    nickelpipeline.psf_analysis
    nickelpipeline.reduction
+   nickelpipeline.scripts
 
 Module contents
 ---------------

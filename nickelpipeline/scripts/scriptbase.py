@@ -1,8 +1,5 @@
 """
 Implements base classes for use with scripts.
-
-.. include common links, assuming primary doc root is up one directory
-.. include:: ../include/links.rst
 """
 
 import argparse
@@ -13,7 +10,7 @@ class SmartFormatter(argparse.HelpFormatter):
     r"""
     Enable a combination of both fixed-format and wrappable lines to be
     formatted for the help statements for command-line arguments used with
-    `argparse.ArgumentParser`_.
+    `argparse.ArgumentParser`.
 
     Borrows from
     https://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
@@ -22,8 +19,8 @@ class SmartFormatter(argparse.HelpFormatter):
     help string is parsed by the base class.
 
     When parsed by this formatter, the leading "R|" characters are stripped and
-    the lines to be printed are parsed using `str.splitlines`_.  Each resulting
-    line is wrapped using `textwrap.wrap`_, unless it begins with the characters
+    the lines to be printed are parsed using `str.splitlines`.  Each resulting
+    line is wrapped using `textwrap.wrap`, unless it begins with the characters
     "F|", which forces the line to remain unaltered (except for stripping the
     leading characters).
 
@@ -122,7 +119,7 @@ class ScriptBase:
     def name(cls):
         """
         Provide the name of the script.  By default, this is the name of the
-        module with "nickelpipeline_" prepended.
+        module with ``nickelpipeline_`` prepended.
         """
         return f"nickelpipeline_{cls.__module__.split('.')[-1]}"
 
@@ -159,11 +156,11 @@ class ScriptBase:
                 than this number of characters, if possible given the help
                 formatter.  If None, the width is the same as the terminal
                 width.
-            formatter (`argparse.HelpFormatter`_):
+            formatter (`argparse.HelpFormatter`):
                 Class used to format the help output.
 
         Returns:
-            `argparse.ArgumentParser`_: Command-line interpreter.
+            `argparse.ArgumentParser`: Command-line interpreter.
         """
         return argparse.ArgumentParser(description=description,
                                        formatter_class=lambda prog: formatter(prog, width=width))

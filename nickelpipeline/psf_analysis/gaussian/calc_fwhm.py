@@ -16,7 +16,7 @@ from astropy.visualization import ZScaleInterval
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats import SigmaClip
 
-from nickelpipeline.reduction.reduction_split import process_single
+#from nickelpipeline.reduction.reduction_split import process_single
 from nickelpipeline.convenience.fits_class import Fits_Simple
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 from nickelpipeline.convenience.nickel_data import bad_columns
@@ -246,12 +246,12 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
         raise ValueError("mode must = 'psf', 'aper', 'fwhm', 'fwhms, std', or 'fwhm coords'")
 
 
-def fwhm_from_raw(image, bias, flat):
-    image = Path(image)
-    reduced_image = process_single(image, bias, flat)
-    fwhm = calc_fwhm(reduced_image)
-    print(f"FWHM for image {image.name} = {fwhm}")
-    return fwhm
+#def fwhm_from_raw(image, bias, flat):
+#    image = Path(image)
+#    reduced_image = process_single(image, bias, flat)
+#    fwhm = calc_fwhm(reduced_image)
+#    print(f"FWHM for image {image.name} = {fwhm}")
+#    return fwhm
 
 
 def batch_fwhm(path_list, plot=False, max_std=0.5, mode='psf'):
