@@ -99,7 +99,7 @@ class Fits_Simple:
             try:
                 return hdul['MASK'].data
             except KeyError:
-                logger.debug('No mask in fits file; returning default mask')
+                logger.debug(f'No mask in FITS file {self.path.name}; returning default mask')
                 if all(self.data.shape == ccd_shape):
                     return nickel_mask
                 elif all(self.data.shape == fov_shape):
@@ -117,13 +117,22 @@ class Fits_Simple:
     
     @property
     def object(self):
-        return self.header["OBJECT"]
+        try:
+            return self.header["OBJECT"]
+        except KeyError:
+            return None
     @property
     def filtnam(self):
-        return self.header["FILTNAM"]
+        try:
+            return self.header["FILTNAM"]
+        except KeyError:
+            return None
     @property
     def exptime(self):
-        return self.header["EXPTIME"]
+        try:
+            return self.header["EXPTIME"]
+        except KeyError:
+            return None
     
     def __str__(self) -> str:
         """

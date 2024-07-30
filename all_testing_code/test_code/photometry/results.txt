@@ -1,0 +1,119 @@
+15:50:48 - INFO - Actual flux = 10000.000
+15:50:48 - INFO - Avg fitted flux = 9949.384
+15:50:48 - INFO - Avg of predicted flux error = 116.955
+15:50:48 - INFO -     in % = 1.170%
+15:50:48 - INFO - Avg of actual flux error = -50.616
+15:50:48 - INFO -     in % = -0.506%
+
+15:50:48 - INFO - Actual flux = 15000.000
+15:50:48 - INFO - Avg fitted flux = 15101.161
+15:50:48 - INFO - Avg of predicted flux error = 115.618
+15:50:48 - INFO -     in % = 0.771%
+15:50:48 - INFO - Avg of actual flux error = 101.161
+15:50:48 - INFO -     in % = 0.674%
+
+15:50:48 - INFO - Actual flux = 20000.000
+15:50:48 - INFO - Avg fitted flux = 19976.343
+15:50:48 - INFO - Avg of predicted flux error = 113.658
+15:50:48 - INFO -     in % = 0.568%
+15:50:48 - INFO - Avg of actual flux error = -23.657
+15:50:48 - INFO -     in % = -0.118%
+
+15:50:48 - INFO - Actual flux = 25000.000
+15:50:48 - INFO - Avg fitted flux = 25125.322
+15:50:48 - INFO - Avg of predicted flux error = 116.075
+15:50:48 - INFO -     in % = 0.464%
+15:50:48 - INFO - Avg of actual flux error = 125.322
+15:50:48 - INFO -     in % = 0.501%
+
+15:50:48 - INFO - Actual flux = 30000.000
+15:50:48 - INFO - Avg fitted flux = 30172.073
+15:50:48 - INFO - Avg of predicted flux error = 119.203
+15:50:48 - INFO -     in % = 0.397%
+15:50:48 - INFO - Avg of actual flux error = 172.073
+15:50:48 - INFO -     in % = 0.574%
+
+15:50:48 - INFO - Actual flux = 35000.000
+15:50:48 - INFO - Avg fitted flux = 35051.861
+15:50:48 - INFO - Avg of predicted flux error = 117.533
+15:50:48 - INFO -     in % = 0.336%
+15:50:48 - INFO - Avg of actual flux error = 51.861
+15:50:48 - INFO -     in % = 0.148%
+
+15:50:48 - INFO - Actual flux = 40000.000
+15:50:48 - INFO - Avg fitted flux = 40164.089
+15:50:48 - INFO - Avg of predicted flux error = 115.895
+15:50:48 - INFO -     in % = 0.290%
+15:50:48 - INFO - Avg of actual flux error = 164.089
+15:50:48 - INFO -     in % = 0.410%
+
+15:50:48 - INFO - Actual flux = 45000.000
+15:50:48 - INFO - Avg fitted flux = 45134.655
+15:50:48 - INFO - Avg of predicted flux error = 116.129
+15:50:48 - INFO -     in % = 0.258%
+15:50:48 - INFO - Avg of actual flux error = 134.655
+15:50:48 - INFO -     in % = 0.299%
+
+
+
+-----------------------------------------------------------------
+
+
+
+
+15:51:46 - INFO - Actual flux = 10000.000
+15:51:46 - INFO - Avg fitted flux = 9949.384
+15:51:46 - INFO - Avg of predicted flux error = 116.955
+15:51:46 - INFO -     in % = 1.170%
+15:51:46 - INFO - Avg of actual flux error = -50.616
+15:51:46 - INFO -     in % = -0.506%
+
+15:51:46 - INFO - Actual flux = 15000.000
+15:51:46 - INFO - Avg fitted flux = 15101.161
+15:51:46 - INFO - Avg of predicted flux error = 115.618
+15:51:46 - INFO -     in % = 0.771%
+15:51:46 - INFO - Avg of actual flux error = 101.161
+15:51:46 - INFO -     in % = 0.674%
+
+15:51:46 - INFO - Actual flux = 20000.000
+15:51:46 - INFO - Avg fitted flux = 19976.343
+15:51:46 - INFO - Avg of predicted flux error = 113.658
+15:51:46 - INFO -     in % = 0.568%
+15:51:46 - INFO - Avg of actual flux error = -23.657
+15:51:46 - INFO -     in % = -0.118%
+
+15:51:46 - INFO - Actual flux = 25000.000
+15:51:46 - INFO - Avg fitted flux = 25125.322
+15:51:46 - INFO - Avg of predicted flux error = 116.075
+15:51:46 - INFO -     in % = 0.464%
+15:51:47 - INFO - Avg of actual flux error = 125.322
+15:51:47 - INFO -     in % = 0.501%
+
+15:51:47 - INFO - Actual flux = 30000.000
+15:51:47 - INFO - Avg fitted flux = 30172.073
+15:51:47 - INFO - Avg of predicted flux error = 119.203
+15:51:47 - INFO -     in % = 0.397%
+15:51:47 - INFO - Avg of actual flux error = 172.073
+15:51:47 - INFO -     in % = 0.574%
+
+15:51:47 - INFO - Actual flux = 35000.000
+15:51:47 - INFO - Avg fitted flux = 35051.861
+15:51:47 - INFO - Avg of predicted flux error = 117.533
+15:51:47 - INFO -     in % = 0.336%
+15:51:47 - INFO - Avg of actual flux error = 51.861
+15:51:47 - INFO -     in % = 0.148%
+
+15:51:47 - INFO - Actual flux = 40000.000
+15:51:47 - INFO - Avg fitted flux = 40164.089
+15:51:47 - INFO - Avg of predicted flux error = 115.895
+15:51:47 - INFO -     in % = 0.290%
+15:51:47 - INFO - Avg of actual flux error = 164.089
+15:51:47 - INFO -     in % = 0.410%
+
+15:51:47 - INFO - Actual flux = 45000.000
+15:51:47 - INFO - Avg fitted flux = 45134.655
+15:51:47 - INFO - Avg of predicted flux error = 116.129
+15:51:47 - INFO -     in % = 0.258%
+15:51:47 - INFO - Avg of actual flux error = 134.655
+15:51:47 - INFO -     in % = 0.299%
+
