@@ -220,3 +220,60 @@
  76       60             3  64.07962273618494  408.8289976488022  749.9286935886219 13350.947278647427 408.82130362819805  753.4710390724424 -1053.1842589964601   0.7008406031975385    0.804272842367558 256.45021301747016     121          1  -2.669942206345297    -0.08488126818172075     4
  77       61             3   63.8084086422823  788.8100194467446  884.5621842126391 13125.995488839813  787.5280771074747  883.7159705770595  1249.0531204271701   0.6466653598871018   0.6671948082380766  288.9987356985499     110          2   2.530450223637701     0.08298855235022275     1
  78       61             3   63.7004615391991  794.1444766241658   886.330513890366 14970.835758827907  795.4260935165255  887.0518195482807  1134.9773537242736   0.6962077048749168    0.726226782802546  285.6214180708743     121          2  2.9222181968210865    0.057964990980798194     
+
+
+11:01:57 - INFO - Actual flux = 3000.000
+11:01:57 - INFO - Avg fitted flux = 2885.111
+11:01:57 - INFO - Avg of predicted flux error = 114.444
+11:01:57 - INFO -     in % = 3.815%
+11:01:57 - INFO - Avg of actual flux error = -114.889
+11:01:57 - INFO -     in % = -3.830%
+11:01:57 - INFO - STD of actual flux error = 131.041
+
+11:01:57 - INFO - Actual flux = 5000.000
+11:01:57 - INFO - Avg fitted flux = 4880.812
+11:01:57 - INFO - Avg of predicted flux error = 115.290
+11:01:57 - INFO -     in % = 2.306%
+11:01:57 - INFO - Avg of actual flux error = -119.188
+11:01:57 - INFO -     in % = -2.384%
+11:01:57 - INFO - STD of actual flux error = 133.027
+
+11:01:57 - INFO - Actual flux = 7000.000
+11:01:57 - INFO - Avg fitted flux = 6909.132
+11:01:57 - INFO - Avg of predicted flux error = 116.336
+11:01:57 - INFO -     in % = 1.662%
+11:01:57 - INFO - Avg of actual flux error = -90.868
+11:01:57 - INFO -     in % = -1.298%
+11:01:57 - INFO - STD of actual flux error = 138.270
+
+11:01:57 - INFO - Actual flux = 10000.000
+11:01:57 - INFO - Avg fitted flux = 9856.981
+11:01:57 - INFO - Avg of predicted flux error = 116.099
+11:01:57 - INFO -     in % = 1.161%
+11:01:57 - INFO - Avg of actual flux error = -143.019
+11:01:57 - INFO -     in % = -1.430%
+11:01:57 - INFO - STD of actual flux error = 135.973
+
+11:01:57 - INFO - Actual flux = 20000.000
+11:01:57 - INFO - Avg fitted flux = 19955.024
+11:01:57 - INFO - Avg of predicted flux error = 119.684
+11:01:57 - INFO -     in % = 0.598%
+11:01:57 - INFO - Avg of actual flux error = -44.976    <- systematic error
+11:01:57 - INFO -     in % = -0.225%
+11:01:57 - INFO - STD of actual flux error = 127.628
+
+11:01:57 - INFO - Actual flux = 30000.000
+11:01:57 - INFO - Avg fitted flux = 29989.418
+11:01:57 - INFO - Avg of predicted flux error = 118.375
+11:01:57 - INFO -     in % = 0.395%
+11:01:57 - INFO - Avg of actual flux error = -10.582
+11:01:57 - INFO -     in % = -0.035%
+11:01:57 - INFO - STD of actual flux error = 135.654
+
+11:01:57 - INFO - Actual flux = 40000.000
+11:01:57 - INFO - Avg fitted flux = 40008.420
+11:01:57 - INFO - Avg of predicted flux error = 118.041
+11:01:57 - INFO -     in % = 0.295%
+11:01:57 - INFO - Avg of actual flux error = 8.420
+11:01:57 - INFO -     in % = 0.021%
+11:01:57 - INFO - STD of actual flux error = 132.853

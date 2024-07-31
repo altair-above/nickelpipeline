@@ -64,8 +64,10 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
     """
     if fittype == 'elliptical':
         fitter = FitEllipticalMoffat2D  # Type of fitting function to use
+        num_pars = 8
     elif fittype == 'circular':
         fitter = FitMoffat2D  # Type of fitting function to use
+        num_pars = 6
     else:
         raise ValueError("fitter must be 'elliptical' or 'circular'")
 
@@ -88,7 +90,7 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
     if mode == 'stack':
         psf_sum_stack = np.zeros((num_images,) + stamp_shape, dtype=float)
         psf_sum_model = np.zeros((num_images,) + stamp_shape, dtype=float)
-        psf_sum_model_par = np.zeros((num_images, 8), dtype=float)
+        psf_sum_model_par = np.zeros((num_images, num_pars), dtype=float)
     
     # Initialize arrays for 'single' mode
     elif mode == 'single':
@@ -117,7 +119,7 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
                                  alpha, 0.0])
             elif fittype == 'circular':
                 return np.array([float(stamp_width//2), float(stamp_width//2),
-                                np.amax(stamp[i]), gamma, alpha, 0.0])
+                                 np.amax(stamp[i]), gamma, alpha, 0.0])
         
         if mode == 'stack':
             # Stack mode: Sum the stamps and divide by flux before fitting

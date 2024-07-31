@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def make_img(flux, gamma, alpha, name):
+def make_img(flux, gamma, alpha, name, show_img=True):
     
     # Define the dimensions and parameters
     shape = (1024, 1024)
@@ -27,7 +27,7 @@ def make_img(flux, gamma, alpha, name):
     logger.debug(f"Flux of fake sources: {amplitude * np.pi * gamma**2 / (alpha - 1)}")
     
     # pixel_coords = make_grid(1024, 1.0)
-    source_x, source_y = make_grid(shape[0], 200, shape[0]/2, shape[1]/2)
+    source_x, source_y = make_grid(shape[0], 100, shape[0]/2, shape[1]/2)
     source_x = source_x.flatten()
     source_y = source_y.flatten()
     
@@ -44,13 +44,14 @@ def make_img(flux, gamma, alpha, name):
             except IndexError:
                 continue
     
-    interval = ZScaleInterval()
-    vmin, vmax = interval.get_limits(data)
-    cmap = plt.get_cmap()
-    cmap.set_bad('r', alpha=0.5)
-    plt.imshow(data, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
-    plt.colorbar()
-    plt.show()
+    if show_img:
+        interval = ZScaleInterval()
+        vmin, vmax = interval.get_limits(data)
+        cmap = plt.get_cmap()
+        cmap.set_bad('r', alpha=0.5)
+        plt.imshow(data, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
+        plt.colorbar()
+        plt.show()
     
     hdu = fits.PrimaryHDU(data=data)
     hdul = fits.HDUList([hdu])

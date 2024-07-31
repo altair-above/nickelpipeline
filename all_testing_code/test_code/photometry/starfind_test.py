@@ -16,8 +16,14 @@ logger = logging.getLogger(__name__)
 # test_img = Path('test_img2.fits')
 # phot_data_2 = analyze_sources(test_img, plot=True)
 
-image = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/reduced/110_232_R/d1040.fits_red.fits')
-phot_data_3 = analyze_sources(image, plot=True)
+# image = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/reduced/110_232_R/d1040_red.fits')
+# phot_data_3 = analyze_sources(image, plot=True, thresh=7.0)
+
+# image = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/reduced/109_199_R/d1024_red.fits')
+# phot_data_4 = analyze_sources(image, plot=True, thresh=7.0)
+
+image = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/reduced/109_199_B/d1022.fits_red.fits')
+phot_data_5 = analyze_sources(image, plot=True, thresh=7.0)
 
 
 

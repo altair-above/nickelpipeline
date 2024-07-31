@@ -53,8 +53,7 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
                     data[mask] = 0
                 except KeyError:
                     # If no mask in FITS file, sets bad columns = 0
-                    for col in bad_columns:
-                        data[:, col] = 0  # Set the entire column to 0
+                    data[:, bad_columns] = 0
                     logger.debug("No mask in FITS file--masking Nickel bad columns")
                 # Save the modified FITS file to the output directory
                 hdul.writeto(mod_path, overwrite=True)

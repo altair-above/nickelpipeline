@@ -16,7 +16,7 @@ import ccdproc
 from nickelpipeline.convenience.nickel_data import (gain, read_noise, bias_label, 
                                                     dome_flat_label, sky_flat_label,
                                                     dark_label, focus_label)
-from nickelpipeline.convenience.fits_class import nickel_fov_mask
+from nickelpipeline.convenience.nickel_masks import get_masks_from_file
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +254,7 @@ def init_ccddata(frame):
         CCDData: Initialized and processed CCDData object.
     """
     ccd = CCDData.read(frame, unit=u.adu)
-    ccd.mask = nickel_fov_mask
+    ccd.mask = get_masks_from_file('fov_mask')
     ccd = ccdproc.cosmicray_lacosmic(ccd, gain_apply=False, gain=gain, 
                                      readnoise=read_noise, verbose=False)
     # Apply gain manually due to a bug in cosmicray_lacosmic function
@@ -388,7 +388,7 @@ def save_results(scifile_df, modifier_str, save_dir):
         list: List of paths to the saved files.
     """
     Path.mkdir(save_dir, exist_ok=True)
-    logger.info(f"Saving {len(scifile_df.files)} fully reduced {save_dir.name} images to {save_dir}")
+    logger.info(f"Saving {len(scifile_df.files)} _{modifier_str} images {save_dir.name} images to {save_dir}")
     save_paths = [save_dir / (path.stem.split('_')[0] + f"_{modifier_str}" + path.suffix) for path in scifile_df.paths]
     for file, path in zip(scifile_df.files, save_paths):
         file.write(path, overwrite=True)

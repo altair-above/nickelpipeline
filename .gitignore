@@ -181,7 +181,7 @@ all_testing_code/graphs
 all_testing_code/old_code
 all_testing_code/test99
 all_testing_code/test_code/photometry/proc_files
-all_testing_code/test_code/photometry/test_img*
+all_testing_code/test_code/photometry/test_imgs
 
 *.log.1
 *.log.2

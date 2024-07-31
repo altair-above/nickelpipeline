@@ -189,6 +189,7 @@ class FitEllipticalMoffat2D:
         par[4]: gamma2 (width parameter in 2nd arbitrary(?) direction)
         par[5]: phi (rotation angle in radians)
         par[6]: alpha (shape parameter)
+        par[7]: background
     """
     def __init__(self, c):
         """
