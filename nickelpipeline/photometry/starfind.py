@@ -26,23 +26,6 @@ logger = logging.getLogger(__name__)
 np.set_printoptions(edgeitems=100)
 
 
-def plot_sources(image, x, y, given_fwhm):
-    logger.info(f'Image {image}')
-    positions = np.transpose((x, y))
-    apertures = CircularAperture(positions, r=2*given_fwhm)
-    
-    interval = ZScaleInterval()
-    vmin, vmax = interval.get_limits(image.masked_array)
-    cmap = plt.get_cmap()
-    cmap.set_bad('r', alpha=0.5)
-    plt.figure(figsize=(12,10))
-    plt.imshow(image.masked_array, origin='lower', vmin=vmin, vmax=vmax,
-               cmap=cmap, interpolation='nearest')
-    plt.colorbar()
-    apertures.plot(color='r', lw=1.5, alpha=0.5)
-    plt.show()
-
-
 def analyze_sources(image, plot=False):
     
     thresh=10.0
@@ -76,14 +59,28 @@ def analyze_sources(image, plot=False):
     column_names = ['chip', 'id', 'xcentroid', 'ycentroid', 'bkg', 'kron_radius', 'raw_flux', 'flux', '?']
     sources = Table(source_data, names=column_names)
     logger.debug(f"Sources Found (Iter 1): \n{log_astropy_table(sources)}")
+    # sources = filter_off_ccd(sources, xname='xcentroid', yname='ycentroid')
     
     # Fit PSF models and get source coordinates and parameters
-    _, source_pars, _ = fit_psf_single(base, 1, fittype='circular')
+    source_coords, source_pars, _ = fit_psf_single(base, 1, fittype='circular')
     
     avg_par = np.mean(source_pars, axis=0)
     avg_fwhm = gamma_to_fwhm(avg_par[3], avg_par[4])
     logger.debug(f"Averaged-out Moffat fit parameters: \namplitude = {avg_par[2]}, gamma = {avg_par[3]}, alpha = {avg_par[4]}, background = {avg_par[5]}")
     logger.info(f"Averaged-out FWHM = {avg_fwhm}")
+    
+    init_phot_data = Table()
+    init_phot_data.add_column(source_coords[:,0], name='x_fit')
+    init_phot_data.add_column(source_coords[:,1], name='y_fit')
+    init_phot_data.add_column(moffat_integral(source_pars[:,2], source_pars[:,3], source_pars[:,4]), name='flux_fit')
+    init_phot_data.add_column([i for i in range(len(source_pars))], name='group_id')
+    init_phot_data.add_column([1 for _ in range(len(source_pars))], name='group_size')
+    # logger.debug(f"Sources Found (Iter 1): \n{log_astropy_table(phot_data)}")
+    # init_phot_data = filter_off_ccd(init_phot_data)
+    logger.debug(log_astropy_table(init_phot_data))
+    
+    if plot:
+        plot_sources(image, init_phot_data, avg_fwhm)
 
     # #----------------------------------------------------------------------
     # # Do a first source detection using the default FWHM
@@ -98,7 +95,7 @@ def analyze_sources(image, plot=False):
     #----------------------------------------------------------------------
     # Attempt to improve the source detection by improving the FWHM estimate
     #----------------------------------------------------------------------
-    thresh=10.0
+    thresh=7.0
     aper_size=avg_fwhm*1.8
     local_bkg_range=(3*avg_fwhm,6*avg_fwhm)
     win = int(np.ceil(2*avg_fwhm))
@@ -123,18 +120,42 @@ def analyze_sources(image, plot=False):
     phot = IterativePSFPhotometry(finder=iraffind, grouper=grouper,
                                   localbkg_estimator=local_bkg, psf_model=moffat_psf,
                                   fitter=fitter, fit_shape=win,
-                                  aperture_radius=aper_size)
+                                  aperture_radius=aper_size, mode='all')
     # This is actually when the fitting is done
     phot_data = phot(data=img.data, mask=img.mask,
                      init_params=Table(sources['xcentroid', 'ycentroid', 'flux'],
                                        names=('x_0', 'y_0', 'flux_0')))
-    phot_data = filter_phot_data(phot_data, avg_fwhm)
+    
     logger.debug(f"Sources Found (Iter 2): \n{log_astropy_table(phot_data)}")
     
+    # phot_data = filter_off_ccd(phot_data)
+    phot_data = filter_phot_data(phot_data, avg_fwhm)
+    
     if plot:
-        plot_sources(image, phot_data['x_fit'], phot_data['y_fit'], avg_fwhm)
+        plot_sources(image, phot_data, avg_fwhm)
     
     return phot_data
+
+
+def filter_off_ccd(table, xname='x_fit', yname='y_fit'):
+    """
+    Removes all rows from the table with coordinates outside ccd_shape
+    
+    Parameters:
+    table (astropy.table.Table): The input table.
+    
+    Returns:
+    astropy.table.Table: The filtered table.
+    """
+
+    indx2 = table[xname] > 0
+    indx3 = table[yname] > 0
+    indx4 = table[xname] < ccd_shape[0]
+    indx5 = table[yname] < ccd_shape[1]
+    
+    # Combine all masks
+    combined_mask = indx2 & indx3 & indx4 & indx5 #& indx6 #& indx1
+    return table[combined_mask]
 
 
 def filter_phot_data(table, fwhm):
@@ -151,10 +172,10 @@ def filter_phot_data(table, fwhm):
     """
     # Create boolean masks for each condition
     indx1 = table['iter_detected'] == 1 #np.max(table['iter_detected'])
-    indx2 = table['x_fit'] > 0
-    indx3 = table['y_fit'] > 0
-    indx4 = table['x_fit'] < ccd_shape[0]
-    indx5 = table['y_fit'] < ccd_shape[1]
+    # indx2 = table['x_fit'] > 0
+    # indx3 = table['y_fit'] > 0
+    # indx4 = table['x_fit'] < ccd_shape[0]
+    # indx5 = table['y_fit'] < ccd_shape[1]
     
     i, j = np.meshgrid(np.arange(len(table)), np.arange(len(table)),
                             indexing='ij')
@@ -164,15 +185,66 @@ def filter_phot_data(table, fwhm):
                             - table['y_fit'][None,:]))
     indx6 = (dist < fwhm*1.7) & (i != j) & (j > i)
     indx6 = np.logical_not(np.any(indx6, axis=0))
-    # logger.debug(indx6)
     logger.debug(f"{len(indx6)-sum(indx6)} sources removed for being too close")
     
     # Combine all masks
-    combined_mask = indx2 & indx3 & indx4 & indx5 #& indx6 #& indx1
+    # combined_mask = indx2 & indx3 & indx4 & indx5 #& indx6 #& indx1
+    
+    indx_flag = table['flags'] <= 1
+    indx_high_err = np.array(table['flux_err']) / np.array(table['flux_fit']) < 0.2
+    combined_mask = indx_flag & indx_high_err
     
     # table.remove_columns(['x_0_2_init', 'y_0_2_init', 'amplitude_2_init', 'x_0_2_fit', 'y_0_2_fit', 'gamma_2_init', 'alpha_2_init', 'amplitude_4_init'])
     
-    return table[combined_mask]
+    # return table[combined_mask]
+    return table
+
+
+
+def plot_sources(image, phot_data, given_fwhm):
+    # bad_sources = phot_data['flags'] > 1
+    good_phot_data = phot_data[phot_data['group_size'] <= 1]
+    bad_phot_data = phot_data[phot_data['group_size'] > 1]
+    
+    logger.info(f'Image {image}')
+    
+    x_good = good_phot_data['x_fit']
+    y_good = good_phot_data['y_fit']
+    good_positions = np.transpose((x_good, y_good))
+    good_apertures = CircularAperture(good_positions, r=2*given_fwhm)
+    
+    x_bad = bad_phot_data['x_fit']
+    y_bad = bad_phot_data['y_fit']
+    bad_positions = np.transpose((x_bad, y_bad))
+    bad_apertures = CircularAperture(bad_positions, r=2*given_fwhm)
+    
+    interval = ZScaleInterval()
+    vmin, vmax = interval.get_limits(image.masked_array)
+    cmap = plt.get_cmap()
+    cmap.set_bad('r', alpha=0.5)
+    plt.figure(figsize=(12,10))
+    plt.imshow(image.masked_array, origin='lower', vmin=vmin, vmax=vmax,
+               cmap=cmap, interpolation='nearest')
+    plt.colorbar()
+    good_apertures.plot(color='m', lw=1.5, alpha=0.5)
+    bad_apertures.plot(color='r', lw=1.5, alpha=0.5)
+    
+    # Annotate good sources with flux_fit values
+    for i in range(len(good_phot_data)):
+        plt.text(x_good[i]-10, y_good[i]+17, f'{good_phot_data["flux_fit"][i]:.0f}', color='white', fontsize=8, ha='center', va='center')
+    
+    group_ids = set(bad_phot_data['group_id'])
+    for id in group_ids:
+        jitter_x = 45
+        group = bad_phot_data[bad_phot_data['group_id'] == id]
+        for i in range(len(group)):
+            plt.text(group['x_fit'][i]+jitter_x, group['y_fit'][i]+(i-2)*20, f'{group["flux_fit"][i]:.0f}', color='red', fontsize=8, ha='center', va='center')
+    # for i in range(len(bad_phot_data)):
+    #     jitter_x = 45
+    #     jitter_y = np.random.normal(scale=35)
+    #     plt.text(x_bad[i]+jitter_x, y_bad[i]+jitter_y, f'{bad_phot_data["flux_fit"][i]:.0f}', color='red', fontsize=8, ha='center', va='center')
+    plt.gcf().set_dpi(300)
+    plt.show()
 
 
 def check_integrals(phot_data):

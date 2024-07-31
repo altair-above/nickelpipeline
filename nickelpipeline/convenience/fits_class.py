@@ -57,31 +57,7 @@ class Fits_Simple:
         else:
             image_path = Path(image_path)
             self.path = image_path
-            self.filename = image_path.stem.split('_')[0]
-        
-            # with fits.open(image_path) as hdul:
-            #     self.header = hdul[0].header
-            #     self.data = hdul[0].data
-            #     try:
-            #         self.mask = hdul['MASK'].data
-            #     except KeyError:
-            #         if all(self.data.shape == ccd_shape):
-            #             self.mask = nickel_mask
-            #         elif all(self.data.shape == fov_shape):
-            #             self.mask = nickel_fov_mask
-            # self.masked_array = ma.masked_array(self.data, self.mask)
-            
-            # try:
-            #     self.image_num = extract_number(self.filename)
-            #     self.object = self.header["OBJECT"]
-            #     self.filtnam = self.header["FILTNAM"]
-            #     self.exptime = self.header["EXPTIME"]
-            # except:
-            #     # For FITS images with limited header information
-            #     self.image_num = None
-            #     self.object = None
-            #     self.filtnam = None
-            #     self.exptime = None
+            self.filename = image_path.name
     
     @property
     def header(self):

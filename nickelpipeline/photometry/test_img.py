@@ -119,9 +119,10 @@ def check_stats(phot_data, actual_flux):
     
     actual_error_avg = np.mean(actual_errors)
     logger.info(f"Avg of actual flux error = {actual_error_avg:.3f}")
-    logger.info(f"    in % = {actual_error_avg/actual_flux*100:.3f}%\n")
+    logger.info(f"    in % = {actual_error_avg/actual_flux*100:.3f}%")
     
-    # actual_error_std = np.std(actual_errors)
-    # logger.info(f"STD of actual flux error = {actual_error_std:.3f}\n")
+    actual_error_std = np.std(actual_errors)
+    logger.info(f"STD of actual flux error = {actual_error_std:.3f}")
+    # logger.info(f"    in % = {actual_error_std/actual_flux*100:.3f}%\n")
     
     

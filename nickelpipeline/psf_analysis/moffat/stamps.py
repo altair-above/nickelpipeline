@@ -100,6 +100,8 @@ def generate_stamps(images, output_base, thresh=15.):
         mean, median, std = sigma_clipped_stats(masked_images[index], sigma=3.)
         starfind = DAOStarFinder(fwhm=default_fwhm, threshold=thresh*std, peakmax=55000)
         sources = starfind(masked_images[index].filled(0.0) - median, mask=np.ma.getmaskarray(masked_images[index]))
+        if sources is None:
+            continue
         nsources = len(sources)
         ap_centers = np.column_stack((sources['xcentroid'], sources['ycentroid']))  # Source positions
 
@@ -174,7 +176,7 @@ def generate_stamps(images, output_base, thresh=15.):
         logger.info(f'Working on image {images[index]} ({len(stamps[keep])} stamps)')
 
         # Plot and save the stamps to a PDF file
-        pdf_file = output_base.with_suffix(f".{images[index].filename.split('.')[0]}.stamps.pdf")
+        pdf_file = output_base.with_suffix(f".{images[index].path.stem.split('_')[0]}.stamps.pdf")
         show_stamps(all_stamps[index], pdf_file)
 
     # Save the source data to a text file
