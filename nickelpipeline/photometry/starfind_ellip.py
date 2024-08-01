@@ -2,7 +2,6 @@ import numpy as np
 import logging
 
 from astropy.modeling.fitting import LevMarLSQFitter
-from astropy.modeling.functional_models import Moffat2D
 from photutils.detection import IRAFStarFinder
 from photutils.aperture import CircularAperture
 from photutils.psf import IterativePSFPhotometry, make_psf_model
@@ -22,7 +21,7 @@ from nickelpipeline.convenience.log import log_astropy_table
 
 from nickelpipeline.psf_analysis.moffat.stamps import generate_stamps
 from nickelpipeline.psf_analysis.moffat.fit_psf import fit_psf_single, fit_psf_stack, psf_plot
-
+from nickelpipeline.photometry.moffat_model_photutils import MoffatElliptical2D
 
 logger = logging.getLogger(__name__)
 np.set_printoptions(edgeitems=100)
@@ -55,7 +54,7 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all'):
     img_name = image.filename.split('.')[0]
     proc_dir = Path('.').resolve() / "proc_files"
     Path.mkdir(proc_dir, exist_ok=True)
-    proc_subdir = proc_dir / 'circular'
+    proc_subdir = proc_dir / 'elliptical'
     Path.mkdir(proc_subdir, exist_ok=True)
     base_parent = proc_subdir / img_name
     Path.mkdir(base_parent, exist_ok=True)
@@ -71,12 +70,15 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all'):
     # sources = filter_off_ccd(sources, xname='xcentroid', yname='ycentroid')
     
     # Fit PSF models and get source coordinates and parameters
-    source_coords, source_fits, _ = fit_psf_single(base, 1, fittype='circular')
+    source_coords, source_fits, _ = fit_psf_single(base, 1, fittype='elliptical')
     source_pars = np.array([fit.par for fit in source_fits])
-    avg_par = np.mean(source_pars, axis=0)
-    avg_fwhm = gamma_to_fwhm(avg_par[3], avg_par[4])
-    logger.debug(f"Averaged-out Moffat fit parameters: \namplitude = {avg_par[2]}, gamma = {avg_par[3]}, alpha = {avg_par[4]}, background = {avg_par[5]}")
-    logger.info(f"Averaged-out FWHM = {avg_fwhm}")
+    
+    # avg_par = np.mean(source_pars, axis=0)
+    # avg_fwhm1 = gamma_to_fwhm(avg_par[3], avg_par[6])
+    # avg_fwhm2 = gamma_to_fwhm(avg_par[4], avg_par[6])
+    # avg_fwhm = (avg_fwhm1 + avg_fwhm2)/2
+    # logger.debug(f"Averaged-out Moffat fit parameters: \namplitude = {avg_par[2]}, gamma1 = {avg_par[3]}, gamma2 = {avg_par[4]}, phi = {avg_par[5]}, alpha = {avg_par[6]}, background = {avg_par[7]}")
+    # logger.info(f"Averaged-out FWHM = {avg_fwhm}")
     
     # brightest = np.array(sorted(source_pars, key=lambda coord: coord[2])[:3])
     # logger.debug(brightest)
@@ -85,24 +87,14 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all'):
     # logger.debug(f"lim_avg Moffat fit parameters: \namplitude = {lim_avg_par[2]}, gamma = {lim_avg_par[3]}, alpha = {lim_avg_par[4]}, background = {lim_avg_par[5]}")
     # logger.info(f"lim_avg FWHM = {lim_avg_fwhm}")
     
-    init_phot_data = Table()
-    init_phot_data.add_column(source_coords[:,0], name='x_fit')
-    init_phot_data.add_column(source_coords[:,1], name='y_fit')
-    init_phot_data.add_column(moffat_integral(source_pars[:,2], source_pars[:,3], source_pars[:,4]), name='flux_fit')
-    init_phot_data.add_column([i for i in range(len(source_pars))], name='group_id')
-    init_phot_data.add_column([1 for _ in range(len(source_pars))], name='group_size')
-    # logger.debug(f"Sources Found (Iter 1): \n{log_astropy_table(phot_data)}")
-    # init_phot_data = filter_off_ccd(init_phot_data)
-    # logger.debug(log_astropy_table(init_phot_data))
-    
-    if plot:
-        plot_sources(image, init_phot_data, avg_fwhm)
     
     psf_file = Path(f'{str(base)}.psf.fits').resolve()  # PSF info stored here
-    stack_fit = fit_psf_stack(base, 1, fittype='circular', ofile=psf_file)
+    stack_fit = fit_psf_stack(base, 1, fittype='elliptical', ofile=psf_file)
     stack_par = stack_fit.par
-    stack_fwhm = gamma_to_fwhm(stack_par[3], stack_par[4])
-    logger.debug(f"Stack Moffat fit parameters: \namplitude = {stack_par[2]}, gamma = {stack_par[3]}, alpha = {stack_par[4]}, background = {stack_par[5]}")
+    stack_fwhm1 = gamma_to_fwhm(stack_par[3], stack_par[6])
+    stack_fwhm2 = gamma_to_fwhm(stack_par[4], stack_par[6])
+    stack_fwhm = (stack_fwhm1 + stack_fwhm2)/2
+    logger.debug(f"Stack Moffat fit parameters: \namplitude = {stack_par[2]}, gamma1 = {stack_par[3]}, gamma2 = {stack_par[4]}, phi = {stack_par[5]}, alpha = {stack_par[6]}, background = {stack_par[7]}")
     logger.info(f"Stack FWHM = {stack_fwhm}")
 
     fit_par = stack_par
@@ -115,16 +107,20 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all'):
     # fit_fwhm = avg_fwhm
     
     img.data[:,bad_columns] = fit_par[5]
-
-    # #----------------------------------------------------------------------
-    # # Do a first source detection using the default FWHM
-    # #----------------------------------------------------------------------
-    # _, median, std = sigma_clipped_stats(img, sigma=3.)
-    # starfind = IRAFStarFinder(fwhm=avg_fwhm, threshold=thresh*std,
-    #                           minsep_fwhm=0.1, sky=0.0, peakmax=55000,)
-    # sources = starfind(data=(img.data - median), mask=img.mask)
-    # if sources is None:
-    #     logger.info(f'Found {len(sources)} sources in {image}.')
+    
+    init_phot_data = Table()
+    init_phot_data.add_column(source_coords[:,0], name='x_fit')
+    init_phot_data.add_column(source_coords[:,1], name='y_fit')
+    flux_integrals = [discrete_moffat_ellip_integral(par[2], par[3], par[4], par[5], par[6]) for par in source_pars]
+    init_phot_data.add_column(flux_integrals, name='flux_fit')
+    init_phot_data.add_column([i for i in range(len(source_pars))], name='group_id')
+    init_phot_data.add_column([1 for _ in range(len(source_pars))], name='group_size')
+    # logger.debug(f"Sources Found (Iter 1): \n{log_astropy_table(phot_data)}")
+    # init_phot_data = filter_off_ccd(init_phot_data)
+    # logger.debug(log_astropy_table(init_phot_data))
+    
+    if plot:
+        plot_sources(image, init_phot_data, fit_fwhm)
 
     #----------------------------------------------------------------------
     # Attempt to improve the source detection by improving the FWHM estimate
@@ -147,9 +143,9 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all'):
     fitter = LevMarLSQFitter()  # This is the optimization algorithm
     
     # This is the model of the PSF
-    moffat_psf = Moffat2D(gamma=fit_par[3], alpha=fit_par[4])
+    moffat_psf = MoffatElliptical2D(gamma1=fit_par[3], gamma2=fit_par[4], phi=fit_par[5], alpha=fit_par[6])
     moffat_psf = make_psf_model(moffat_psf)
-    
+    # moffat_psf.fixed = False
     
     # This is the object that performs the photometry
     phot = IterativePSFPhotometry(finder=iraffind, grouper=grouper,
@@ -164,13 +160,10 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all'):
     
     logger.debug(f"Sources Found (Iter 2): \n{log_astropy_table(phot_data)}")
     
-    # phot_data = filter_off_ccd(phot_data)
-    phot_data = filter_phot_data(phot_data, fit_fwhm)
-    
     if plot:
-        plot_sources(image, phot_data, fit_fwhm)
-    
         plot_groups(phot_data, source_coords, source_fits, base)
+        
+        plot_sources(image, phot_data, fit_fwhm)
     
     # group_ids = set(phot_data['group_id'])
     # seen_groups = set()
@@ -211,7 +204,7 @@ def plot_groups(phot_data, source_coords, source_fits, base):
         if len(matching_indices) == 0:
             matching_indices = match_coords((group_x, group_y), source_coords, 4.0)
             if len(matching_indices) == 0:
-                logger.warning("No nearby source found to display")
+                logger.warning("No nearby displayable source found")
         if len(matching_indices) > 1:
             logger.info(f"Multiple nearby sources that could match this group; displaying all")
         for index in matching_indices:
@@ -225,71 +218,6 @@ def match_coords(target, search_space, max_dist=2.0):
     indices = search_tree.query_ball_point(target, max_dist)
     logger.debug(f"Search found indices {indices} within {max_dist} of {target}")
     return indices
-
-
-
-def filter_off_ccd(table, xname='x_fit', yname='y_fit'):
-    """
-    Removes all rows from the table with coordinates outside ccd_shape
-    
-    Parameters:
-    table (astropy.table.Table): The input table.
-    
-    Returns:
-    astropy.table.Table: The filtered table.
-    """
-
-    indx2 = table[xname] > 0
-    indx3 = table[yname] > 0
-    indx4 = table[xname] < ccd_shape[0]
-    indx5 = table[yname] < ccd_shape[1]
-    
-    # Combine all masks
-    combined_mask = indx2 & indx3 & indx4 & indx5 #& indx6 #& indx1
-    return table[combined_mask]
-    
-
-
-def filter_phot_data(table, fwhm):
-    """
-    Removes all rows from the table with coordinates outside ccd_shape
-    and with 'iter_detected' == 1.
-    
-    Parameters:
-    table (astropy.table.Table): The input table.
-    ccd_shape (tuple): A tuple (width, height) representing the shape of the CCD.
-    
-    Returns:
-    astropy.table.Table: The filtered table.
-    """
-    # Create boolean masks for each condition
-    indx1 = table['iter_detected'] == 1 #np.max(table['iter_detected'])
-    # indx2 = table['x_fit'] > 0
-    # indx3 = table['y_fit'] > 0
-    # indx4 = table['x_fit'] < ccd_shape[0]
-    # indx5 = table['y_fit'] < ccd_shape[1]
-    
-    # i, j = np.meshgrid(np.arange(len(table)), np.arange(len(table)),
-    #                         indexing='ij')
-    # dist = np.sqrt(np.square(table['x_fit'][:,None]
-    #                          - table['x_fit'][None,:])
-    #             + np.square(table['y_fit'][:,None]
-    #                         - table['y_fit'][None,:]))
-    # indx6 = (dist < fwhm*1.7) & (i != j) & (j > i)
-    # indx6 = np.logical_not(np.any(indx6, axis=0))
-    # logger.debug(f"{len(indx6)-sum(indx6)} sources removed for being too close")
-    
-    # Combine all masks
-    # combined_mask = indx2 & indx3 & indx4 & indx5 #& indx6 #& indx1
-    
-    indx_flag = table['flags'] <= 1
-    indx_high_err = np.array(table['flux_err']) / np.array(table['flux_fit']) < 0.2
-    combined_mask = indx_flag & indx_high_err
-    
-    # table.remove_columns(['x_0_2_init', 'y_0_2_init', 'amplitude_2_init', 'x_0_2_fit', 'y_0_2_fit', 'gamma_2_init', 'alpha_2_init', 'amplitude_4_init'])
-    
-    # return table[combined_mask]
-    return table
 
 
 
@@ -332,10 +260,7 @@ def plot_sources(image, phot_data, given_fwhm):
         group_y = np.mean(group['y_fit'])
         for i in range(len(group)):
             plt.text(group_x, group_y+(i-1)*20, f'{group["group_id"][i]:.0f}:{group["iter_detected"][i]:.0f}: {group["flux_fit"][i]:.0f}', color='red', fontsize=8, ha='left', va='center')
-    # for i in range(len(bad_phot_data)):
-    #     jitter_x = 45
-    #     jitter_y = np.random.normal(scale=35)
-    #     plt.text(x_bad[i]+jitter_x, y_bad[i]+jitter_y, f'{bad_phot_data["flux_fit"][i]:.0f}', color='red', fontsize=8, ha='center', va='center')
+    
     plt.gcf().set_dpi(300)
     plt.show()
 
@@ -363,7 +288,7 @@ def gamma_to_fwhm(gamma, alpha):
 def moffat_integral(amplitude, gamma, alpha):
     return amplitude * np.pi * gamma**2 / (alpha - 1)
 
-def discrete_moffat_integral(amplitude, gamma, alpha, step_size=1.0):
+def discrete_moffat_ellip_integral(amplitude, gamma1, gamma2, phi, alpha, step_size=1.0):
     # Define the grid size and step size
     grid_size = 10
 
@@ -376,10 +301,9 @@ def discrete_moffat_integral(amplitude, gamma, alpha, step_size=1.0):
     grid_x, grid_y = np.meshgrid(x_coords, y_coords)
     # print(grid_x)
 
-    pixel_fluxes = Moffat2D.evaluate(grid_x, grid_y, amplitude, 0, 0, gamma, alpha)
+    pixel_fluxes = MoffatElliptical2D.evaluate(grid_x, grid_y, amplitude, 0, 0, gamma1, gamma2, phi, alpha)
     pixel_fluxes *= step_size**2
     # print(pixel_fluxes)
-    print(f"total flux = {np.sum(pixel_fluxes)}")
     return np.sum(pixel_fluxes)
 
 # result = discrete_moffat_integral(0.0381, 4.776, 3.728)

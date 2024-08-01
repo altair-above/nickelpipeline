@@ -80,13 +80,9 @@ def get_graphable_pars(file_paths, group_name, verbose=False):
     # Plot PSF and get FWHM and phi values
     plot_file = Path(f'{str(base)}.psf.pdf').resolve()  # Plots stored here
     psf_plot(plot_file, fit, verbose=verbose)
-    fwhm = get_param_list('fwhm', np.array([fit.par]), (1))
-    ecc = get_param_list('ecc', np.array([fit.par]), (1))
-    phi = get_param_list('phi', np.array([fit.par]), (1))
-    
-    # # Calculate average FWHM and eccentricity
-    # fwhm = (fwhm1 + fwhm2)/2
-    # ecc = np.sqrt(np.abs(fwhm1**2 - fwhm2**2))/max(fwhm1, fwhm2)
+    fwhm = get_param_list('fwhm', np.array([fit.par]), (1,))[0][0]
+    ecc = get_param_list('ecc', np.array([fit.par]), (1,))[0][0]
+    phi = get_param_list('phi', np.array([fit.par]), (1,))[0][0]
     
     if verbose:
         print(f"Avg FWHM = {fwhm:3f}")
