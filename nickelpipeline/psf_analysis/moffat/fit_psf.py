@@ -29,6 +29,8 @@ def fit_psf_stack(input_base, num_images, fittype='elliptical', ofile=None):
         num_images (int): Number of images to process.
         ofile (str, optional): Output file path.
         verbose (bool, optional): If True, print detailed output during processing.
+    Returns:
+        ndarray: Fit of all sources stacked (fit.par = parameters)
     """
     return fit_psf_generic('stack', input_base, num_images, fittype, ofile)
 
@@ -44,7 +46,7 @@ def fit_psf_single(input_base, num_images, fittype='elliptical'):
         
     Returns:
         ndarray: Coordinates of all sources
-        ndarray: Fit parameters of all sources
+        ndarray: Fits of all sources (fit.par = parameters)
         ndarray: Image number of all sources
     """
     return fit_psf_generic('single', input_base, num_images, fittype, None)
@@ -96,6 +98,7 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
     elif mode == 'single':
         centroid_coords = []  # List to store centroid coordinates
         fit_pars = []  # List to store fit parameters
+        fit_objs = []
         source_images = []  # List to store the image number of all sources
         
 
@@ -153,6 +156,7 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
                 
                 centroid_coords.append((centroid_x, centroid_y))  # Store coordinates
                 fit_pars.append(fit_par)  # Store fit parameters
+                fit_objs.append(fit)
                 source_images.append(i)
             
     hdu.close()  # Close the FITS file
@@ -170,6 +174,7 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
     elif mode == 'single':
         # Eliminate sources with irregular FWHMs
         fit_pars = np.array(fit_pars)
+        fit_objs = np.array(fit_objs)
         source_images = np.array(source_images)
         centroid_coords = np.array(centroid_coords)
         if fittype == 'elliptical':
@@ -181,6 +186,7 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
         sigma_clip = SigmaClip(sigma=4, maxiters=5)
         masked_fwhm1 = sigma_clip(fwhm1)
         clipped_fit_pars = fit_pars[~masked_fwhm1.mask]
+        clipped_fit_objs = fit_objs[~masked_fwhm1.mask]
         clipped_coords = centroid_coords[~masked_fwhm1.mask]
         clipped_source_images = source_images[~masked_fwhm1.mask]
         
@@ -188,13 +194,14 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
             fwhm2 = FitMoffat2D.to_fwhm(clipped_fit_pars[:,4], clipped_fit_pars[:,6])
             masked_fwhm2 = sigma_clip(fwhm2)
             clipped_fit_pars = clipped_fit_pars[~masked_fwhm2.mask]
+            clipped_fit_objs = clipped_fit_objs[~masked_fwhm2.mask]
             clipped_coords = clipped_coords[~masked_fwhm2.mask]
             clipped_source_images = clipped_source_images[~masked_fwhm2.mask]
         
-        logger.info(f"Number of sources removed in sigma clipping = {len(fit_pars) - len(clipped_fit_pars)}")
-        logger.info(f"Number of sources remaining = {len(clipped_fit_pars)}")
+        logger.info(f"Number of sources removed in sigma clipping = {len(fit_pars) - len(clipped_fit_objs)}")
+        logger.info(f"Number of sources remaining = {len(clipped_fit_objs)}")
         
-        return clipped_coords, clipped_fit_pars, clipped_source_images
+        return clipped_coords, clipped_fit_objs, clipped_source_images
 
 
 def psf_plot(plot_file, fit, fittype='elliptical', verbose=False):
@@ -301,8 +308,6 @@ def psf_plot(plot_file, fit, fittype='elliptical', verbose=False):
             pyplot.show()  # Display the plot
             fig.clear()
         pyplot.close()
-        
-        return fwhm1, fwhm2, phi
 
 
 def main():
