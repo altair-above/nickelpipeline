@@ -98,7 +98,7 @@ def generate_stamps(images, output_base, thresh=15.):
     for index in range(num_images):
         # Source detection
         mean, median, std = sigma_clipped_stats(masked_images[index], sigma=3.)
-        starfind = DAOStarFinder(fwhm=default_fwhm, threshold=thresh*std, peakmax=55000)
+        starfind = DAOStarFinder(fwhm=default_fwhm, threshold=thresh*std)
         sources = starfind(masked_images[index].filled(0.0) - median, mask=np.ma.getmaskarray(masked_images[index]))
         if sources is None:
             continue

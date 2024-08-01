@@ -27,14 +27,16 @@ def fit_psf_stack(input_base, num_images, fittype='elliptical', ofile=None):
     Args:
         input_base (Path): Base of path to files w/ stamp data
         num_images (int): Number of images to process.
+        fittype (str, optional): Type of model to fit ('elliptical' or 'circular')
         ofile (str, optional): Output file path.
-        verbose (bool, optional): If True, print detailed output during processing.
+        
     Returns:
         ndarray: Fit of all sources stacked (fit.par = parameters)
     """
-    return fit_psf_generic('stack', input_base, num_images, fittype, ofile)
+    return fit_psf_generic('stack', input_base, num_images, fittype, 
+                           ofile=ofile)
 
-def fit_psf_single(input_base, num_images, fittype='elliptical'):
+def fit_psf_single(input_base, num_images, fittype='elliptical', sigma_clip=True):
     """
     Fit a PSF to each source found in the directory specified, and return the
     source coordinates, fit parameters, and image number
@@ -42,17 +44,19 @@ def fit_psf_single(input_base, num_images, fittype='elliptical'):
     Args:
         input_base (Path): Base of path to files w/ stamp data
         num_images (int): Number of images to process.
-        verbose (bool, optional): If True, print detailed output during processing.
+        fittype (str, optional): Type of model to fit ('elliptical' or 'circular')
+        sigma_clip (bool, optional): If True, remove PSF fit sources w/ unusual FWHM
         
     Returns:
         ndarray: Coordinates of all sources
         ndarray: Fits of all sources (fit.par = parameters)
         ndarray: Image number of all sources
     """
-    return fit_psf_generic('single', input_base, num_images, fittype, None)
+    return fit_psf_generic('single', input_base, num_images, fittype, 
+                           sigma_clip=sigma_clip, ofile=None)
 
 def fit_psf_generic(mode, input_base, num_images, fittype='elliptical', 
-                    ofile=None):
+                    sigma_clip=True, ofile=None):
     """
     Generic function to fit PSFs to images.
 
@@ -61,8 +65,8 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
         input_base (Path): Base of path to files w/ stamp data
         num_images (int): Number of images in directory to process.
         fittype (str, optional): Type of model to fit ('elliptical' or 'circular')
+        sigma_clip (bool, optional): If True, remove PSF fit sources w/ unusual FWHM
         ofile (str, optional): Output file path for 'stack' mode.
-        verbose (bool, optional): If True, print detailed output during processing.
     """
     if fittype == 'elliptical':
         fitter = FitEllipticalMoffat2D  # Type of fitting function to use
@@ -177,34 +181,38 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
         fit_objs = np.array(fit_objs)
         source_images = np.array(source_images)
         centroid_coords = np.array(centroid_coords)
-        if fittype == 'elliptical':
-            fwhm1 = FitMoffat2D.to_fwhm(fit_pars[:,3], fit_pars[:,6])
-        elif fittype == 'circular':
-            fwhm1 = FitMoffat2D.to_fwhm(fit_pars[:,3], fit_pars[:,4])
         
-        # Create a SigmaClip object and apply it to get a mask
-        sigma_clip = SigmaClip(sigma=4, maxiters=5)
-        masked_fwhm1 = sigma_clip(fwhm1)
-        clipped_fit_pars = fit_pars[~masked_fwhm1.mask]
-        clipped_fit_objs = fit_objs[~masked_fwhm1.mask]
-        clipped_coords = centroid_coords[~masked_fwhm1.mask]
-        clipped_source_images = source_images[~masked_fwhm1.mask]
-        
-        if fittype == 'elliptical':
-            fwhm2 = FitMoffat2D.to_fwhm(clipped_fit_pars[:,4], clipped_fit_pars[:,6])
-            masked_fwhm2 = sigma_clip(fwhm2)
-            clipped_fit_pars = clipped_fit_pars[~masked_fwhm2.mask]
-            clipped_fit_objs = clipped_fit_objs[~masked_fwhm2.mask]
-            clipped_coords = clipped_coords[~masked_fwhm2.mask]
-            clipped_source_images = clipped_source_images[~masked_fwhm2.mask]
-        
-        logger.info(f"Number of sources removed in sigma clipping = {len(fit_pars) - len(clipped_fit_objs)}")
-        logger.info(f"Number of sources remaining = {len(clipped_fit_objs)}")
-        
-        return clipped_coords, clipped_fit_objs, clipped_source_images
+        if not sigma_clip:
+            return centroid_coords, fit_objs, source_images
+        else:
+            if fittype == 'elliptical':
+                fwhm1 = FitMoffat2D.to_fwhm(fit_pars[:,3], fit_pars[:,6])
+            elif fittype == 'circular':
+                fwhm1 = FitMoffat2D.to_fwhm(fit_pars[:,3], fit_pars[:,4])
+            
+            # Create a SigmaClip object and apply it to get a mask
+            sigma_clipper = SigmaClip(sigma=4, maxiters=5)
+            masked_fwhm1 = sigma_clipper(fwhm1)
+            clipped_fit_pars = fit_pars[~masked_fwhm1.mask]
+            clipped_fit_objs = fit_objs[~masked_fwhm1.mask]
+            clipped_coords = centroid_coords[~masked_fwhm1.mask]
+            clipped_source_images = source_images[~masked_fwhm1.mask]
+            
+            if fittype == 'elliptical':
+                fwhm2 = FitMoffat2D.to_fwhm(clipped_fit_pars[:,4], clipped_fit_pars[:,6])
+                masked_fwhm2 = sigma_clipper(fwhm2)
+                clipped_fit_pars = clipped_fit_pars[~masked_fwhm2.mask]
+                clipped_fit_objs = clipped_fit_objs[~masked_fwhm2.mask]
+                clipped_coords = clipped_coords[~masked_fwhm2.mask]
+                clipped_source_images = clipped_source_images[~masked_fwhm2.mask]
+            
+            logger.info(f"Number of sources removed in sigma clipping = {len(fit_pars) - len(clipped_fit_objs)}")
+            logger.info(f"Number of sources remaining = {len(clipped_fit_objs)}")
+            
+            return clipped_coords, clipped_fit_objs, clipped_source_images
 
 
-def psf_plot(plot_file, fit, fittype='elliptical', verbose=False):
+def psf_plot(plot_file, fit, fittype='elliptical', show=False, plot_fit=True):
     """
     Plot the PSF fitting results and save to a PDF
 
@@ -273,11 +281,12 @@ def psf_plot(plot_file, fit, fittype='elliptical', verbose=False):
     
         oned = Moffat1D()  # Initialize 1D Moffat function
         r_mod = np.linspace(*rlim, 100)  # Radial positions
-        if isinstance(fit, FitMoffat2D):
-            models = [oned.evaluate(r_mod, amp, 0., fit.par[3], beta) + fit.par[5]]
-        else:
-            models = [oned.evaluate(r_mod, amp, 0., fit.par[3], beta) + fit.par[7],
-                      oned.evaluate(r_mod, amp, 0., fit.par[4], beta) + fit.par[7]]
+        if plot_fit:
+            if isinstance(fit, FitMoffat2D):
+                models = [oned.evaluate(r_mod, amp, 0., fit.par[3], beta) + fit.par[5]]
+            else:
+                models = [oned.evaluate(r_mod, amp, 0., fit.par[3], beta) + fit.par[7],
+                        oned.evaluate(r_mod, amp, 0., fit.par[4], beta) + fit.par[7]]
         
         ax = fig.add_axes([0.66, 0.7, 0.3, 0.2])
         ax.minorticks_on()
@@ -285,8 +294,9 @@ def psf_plot(plot_file, fit, fittype='elliptical', verbose=False):
         ax.tick_params(axis='x', which='both', direction='in')
         ax.tick_params(axis='y', which='both', left=False, right=False)
         ax.yaxis.set_major_formatter(ticker.NullFormatter())
-        for model in models:
-            ax.plot(r_mod, model, color='C3')
+        if plot_fit:
+            for model in models:
+                ax.plot(r_mod, model, color='C3')
         ax.scatter(r, stack.ravel(), marker='.', lw=0, s=30, alpha=0.5, color='k')
 
         if isinstance(fit, FitMoffat2D):
@@ -304,7 +314,7 @@ def psf_plot(plot_file, fit, fittype='elliptical', verbose=False):
         ax.text(0.5, -0.15, 'R [pix]', ha='center', va='top', transform=ax.transAxes)
             
         pdf.savefig()  # Save the figure to the PDF
-        if verbose:
+        if show:
             pyplot.show()  # Display the plot
             fig.clear()
         pyplot.close()

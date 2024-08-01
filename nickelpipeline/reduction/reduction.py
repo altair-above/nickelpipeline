@@ -63,10 +63,10 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
 
     # Filter out non-science files
     scifiles_mask = ((file_df.objects != bias_label) &
-                    (file_df.objects != dark_label) &
-                    (file_df.objects != dome_flat_label) &
-                    (file_df.objects != sky_flat_label) &
-                    (file_df.objects != focus_label)).values
+                     (file_df.objects != dark_label) &
+                     (file_df.objects != dome_flat_label) &
+                     (file_df.objects != sky_flat_label) &
+                     (file_df.objects != focus_label)).values
     scifile_df = file_df.copy()[scifiles_mask]
 
     # Perform overscan subtraction & trimming
@@ -92,7 +92,7 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
         for scienceobject in scienceobjects:
             # Filter science files by object and filter
             sub_scifile_df = scifile_df.copy()[(scifile_df.objects == scienceobject) &
-                                        (scifile_df.filters == filt)]
+                                               (scifile_df.filters == filt)]
             # Create directory for each science target / filter combination
             sci_dir = reddir / (scienceobject + '_' + filt)
             
@@ -255,6 +255,7 @@ def init_ccddata(frame):
     """
     ccd = CCDData.read(frame, unit=u.adu)
     ccd.mask = get_masks_from_file('fov_mask')
+    ccd.mask[ccd.data > 62000] = True
     ccd = ccdproc.cosmicray_lacosmic(ccd, gain_apply=False, gain=gain, 
                                      readnoise=read_noise, verbose=False)
     # Apply gain manually due to a bug in cosmicray_lacosmic function

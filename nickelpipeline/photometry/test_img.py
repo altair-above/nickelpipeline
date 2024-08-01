@@ -72,10 +72,6 @@ def make_grid(grid_size, step_size, x=0, y=0):
 
 
 def moffat_integral_pixel(all_x, all_y, amplitude, gamma, alpha):
-    # if not isinstance(all_x, np.array):
-    #     all_x = np.array(all_x)
-    # if not isinstance(all_y, np.array):
-    #     all_y = np.array(all_y)
     
     # Define the grid size and step size
     grid_size = 1.0
@@ -99,6 +95,16 @@ def moffat_integral_pixel(all_x, all_y, amplitude, gamma, alpha):
         pixel_flux_grid[i,j] = flux
     
     return pixel_flux_grid
+
+
+def check_integrals(phot_data):
+    integ = moffat_integral((phot_data['amplitude_2_fit']), phot_data['gamma_2_fit'], phot_data['alpha_2_fit'])
+    phot_data.add_column(np.array(integ), name='integral of moffat psf')
+    phot_data.add_column(np.array(integ*phot_data['amplitude_4_fit']), name='integral * amp_4')
+    return
+
+def moffat_integral(amplitude, gamma, alpha):
+    return amplitude * np.pi * gamma**2 / (alpha - 1)
 
 
 def check_stats(phot_data, actual_flux):
@@ -125,5 +131,4 @@ def check_stats(phot_data, actual_flux):
     actual_error_std = np.std(actual_errors)
     logger.info(f"STD of actual flux error = {actual_error_std:.3f}")
     # logger.info(f"    in % = {actual_error_std/actual_flux*100:.3f}%\n")
-    
     
