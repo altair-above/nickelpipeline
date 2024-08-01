@@ -4,7 +4,7 @@ from pathlib import Path
 import logging
 
 from nickelpipeline.convenience.log import adjust_global_logger
-from nickelpipeline.photometry.starfind import analyze_sources
+from nickelpipeline.photometry.psf_photometry import analyze_sources
 
 
 adjust_global_logger('INFO', __name__)
