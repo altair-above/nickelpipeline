@@ -19,7 +19,7 @@ from nickelpipeline.psf_analysis.moffat.model_psf import FitEllipticalMoffat2D, 
 logger = logging.getLogger(__name__)
 
 
-def fit_psf_stack(input_base, num_images, fittype='elliptical', ofile=None):
+def fit_psf_stack(input_base, num_images, fittype='ellip', ofile=None):
     """
     Fit one PSF to the stack of all sources found in the directory specified,
     and save this information to relevant files
@@ -27,7 +27,7 @@ def fit_psf_stack(input_base, num_images, fittype='elliptical', ofile=None):
     Args:
         input_base (Path): Base of path to files w/ stamp data
         num_images (int): Number of images to process.
-        fittype (str, optional): Type of model to fit ('elliptical' or 'circular')
+        fittype (str, optional): Type of model to fit ('ellip' or 'circ')
         ofile (str, optional): Output file path.
         
     Returns:
@@ -36,7 +36,7 @@ def fit_psf_stack(input_base, num_images, fittype='elliptical', ofile=None):
     return fit_psf_generic('stack', input_base, num_images, fittype, 
                            ofile=ofile)
 
-def fit_psf_single(input_base, num_images, fittype='elliptical', sigma_clip=True):
+def fit_psf_single(input_base, num_images, fittype='ellip', sigma_clip=True):
     """
     Fit a PSF to each source found in the directory specified, and return the
     source coordinates, fit parameters, and image number
@@ -44,7 +44,7 @@ def fit_psf_single(input_base, num_images, fittype='elliptical', sigma_clip=True
     Args:
         input_base (Path): Base of path to files w/ stamp data
         num_images (int): Number of images to process.
-        fittype (str, optional): Type of model to fit ('elliptical' or 'circular')
+        fittype (str, optional): Type of model to fit ('ellip' or 'circ')
         sigma_clip (bool, optional): If True, remove PSF fit sources w/ unusual FWHM
         
     Returns:
@@ -55,7 +55,7 @@ def fit_psf_single(input_base, num_images, fittype='elliptical', sigma_clip=True
     return fit_psf_generic('single', input_base, num_images, fittype, 
                            sigma_clip=sigma_clip, ofile=None)
 
-def fit_psf_generic(mode, input_base, num_images, fittype='elliptical', 
+def fit_psf_generic(mode, input_base, num_images, fittype='ellip', 
                     sigma_clip=True, ofile=None):
     """
     Generic function to fit PSFs to images.
@@ -64,18 +64,18 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
         mode (str): Mode of fitting ('stack' or 'single').
         input_base (Path): Base of path to files w/ stamp data
         num_images (int): Number of images in directory to process.
-        fittype (str, optional): Type of model to fit ('elliptical' or 'circular')
+        fittype (str, optional): Type of model to fit ('ellip' or 'circ')
         sigma_clip (bool, optional): If True, remove PSF fit sources w/ unusual FWHM
         ofile (str, optional): Output file path for 'stack' mode.
     """
-    if fittype == 'elliptical':
+    if fittype == 'ellip':
         fitter = FitEllipticalMoffat2D  # Type of fitting function to use
         num_pars = 8
-    elif fittype == 'circular':
+    elif fittype == 'circ':
         fitter = FitMoffat2D  # Type of fitting function to use
         num_pars = 6
     else:
-        raise ValueError("fitter must be 'elliptical' or 'circular'")
+        raise ValueError("fitter must be 'ellip' or 'circ'")
 
     # Set up directories and files
     # proc_dir = Path('.').resolve() / "proc_files"
@@ -120,11 +120,11 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
         gamma = default_fwhm / 2 / np.sqrt(2**(1/alpha)-1)
         
         def get_p0(fittype, stamp):
-            if fittype == 'elliptical':
+            if fittype == 'ellip':
                 return np.array([float(stamp_width//2), float(stamp_width//2),
                                  np.amax(stamp[i]), gamma, gamma, 0.0,
                                  alpha, 0.0])
-            elif fittype == 'circular':
+            elif fittype == 'circ':
                 return np.array([float(stamp_width//2), float(stamp_width//2),
                                  np.amax(stamp[i]), gamma, alpha, 0.0])
         
@@ -185,9 +185,9 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
         if not sigma_clip:
             return centroid_coords, fit_objs, source_images
         else:
-            if fittype == 'elliptical':
+            if fittype == 'ellip':
                 fwhm1 = FitMoffat2D.to_fwhm(fit_pars[:,3], fit_pars[:,6])
-            elif fittype == 'circular':
+            elif fittype == 'circ':
                 fwhm1 = FitMoffat2D.to_fwhm(fit_pars[:,3], fit_pars[:,4])
             
             # Create a SigmaClip object and apply it to get a mask
@@ -198,7 +198,7 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
             clipped_coords = centroid_coords[~masked_fwhm1.mask]
             clipped_source_images = source_images[~masked_fwhm1.mask]
             
-            if fittype == 'elliptical':
+            if fittype == 'ellip':
                 fwhm2 = FitMoffat2D.to_fwhm(clipped_fit_pars[:,4], clipped_fit_pars[:,6])
                 masked_fwhm2 = sigma_clipper(fwhm2)
                 clipped_fit_pars = clipped_fit_pars[~masked_fwhm2.mask]
@@ -212,7 +212,7 @@ def fit_psf_generic(mode, input_base, num_images, fittype='elliptical',
             return clipped_coords, clipped_fit_objs, clipped_source_images
 
 
-def psf_plot(plot_file, fit, fittype='elliptical', show=False, plot_fit=True):
+def psf_plot(plot_file, fit, fittype='ellip', show=False, plot_fit=True):
     """
     Plot the PSF fitting results and save to a PDF
 
@@ -221,7 +221,7 @@ def psf_plot(plot_file, fit, fittype='elliptical', show=False, plot_fit=True):
         fit (object): Fitting results.
         verbose (bool, optional): If True, print detailed output during processing.
     """
-    if fittype != 'elliptical':
+    if fittype != 'ellip':
         raise ValueError(f"psf_plot() not yet implemented for fittype={fittype}")
     with PdfPages(plot_file) as pdf:
         # Set up the figure

@@ -226,8 +226,9 @@ NEXT BIG STEP
 - add exptime to table, airmass
 
 
-- star breakdown script
-    - add options within this for creating stamps
-    - display source circles on top of image
+|- star breakdown script
+    |- add options within this for creating stamps
+    |- display source circles on top of image
 |- astrometric solution
 
+FIX CCD SHAPE AND FOV SHAPE USING HEADER

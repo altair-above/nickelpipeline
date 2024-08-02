@@ -3,7 +3,7 @@
 import numpy as np
 import logging
 from photutils.aperture import CircularAperture
-from photutils.aperture import ApertureStats, aperture_photometry
+from photutils.aperture import ApertureStats
 
 from nickelpipeline.convenience.fits_class import Fits_Simple
 from nickelpipeline.convenience.log import log_astropy_table
@@ -36,16 +36,3 @@ def aperture_analysis(phot_data, image, aper_size=8.0):
     logger.debug(f"PSF & Aperture Photometry Results: \n{log_astropy_table(all_data)}")
     
     return all_data
-
-
-    # aper_data = aperture_photometry(image.data, apertures, mask=image.mask)
-    # aper_data = aperstats.to_table(['id', 'centroid', 'sum',
-    #                                 'center_aper_area',])
-    
-    # aper_data = aperstats.to_table()
-    # logger.debug(f"Aperture Photometry Results: \n{log_astropy_table(aper_data)}")
-    
-    return aper_data
-    # aper_data = aperture_photometry(image.data, apertures, mask=image.mask)
-    
-    

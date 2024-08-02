@@ -21,7 +21,6 @@ from nickelpipeline.convenience.nickel_data import bad_columns
 from nickelpipeline.convenience.log import log_astropy_table
 
 from nickelpipeline.photometry.moffat_model_photutils import MoffatElliptical2D
-
 from nickelpipeline.psf_analysis.moffat.stamps import generate_stamps
 from nickelpipeline.psf_analysis.moffat.fit_psf import fit_psf_single, fit_psf_stack, psf_plot
 
@@ -30,7 +29,8 @@ logger = logging.getLogger(__name__)
 np.set_printoptions(edgeitems=100)
 
 
-def analyze_sources(image, plot=False, thresh=10.0, mode='all', fittype='circular'):
+def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
+                 plot_final=True, plot_inters=False):
     
     local_bkg_range=(15,25)
     
@@ -68,18 +68,17 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all', fittype='circula
     column_names = ['chip', 'id', 'xcentroid', 'ycentroid', 'bkg', 'kron_radius', 'raw_flux', 'flux', '?']
     sources = Table(source_data, names=column_names)
     logger.debug(f"Sources Found (Iter 1): \n{log_astropy_table(sources)}")
-    # sources = filter_off_ccd(sources, xname='xcentroid', yname='ycentroid')
     
     # Fit PSF models and get source coordinates and parameters
     source_coords, source_fits, _ = fit_psf_single(base, 1, fittype=fittype, sigma_clip=False)
     source_pars = np.array([fit.par for fit in source_fits])
     
-    avg_par = np.mean(source_pars, axis=0)
-    avg_fwhm = process_par(avg_par, 'Averaged-out', fittype=fittype)
+    # avg_par = np.mean(source_pars, axis=0)
+    # avg_fwhm = process_par(avg_par, 'Averaged-out', fittype=fittype)
     
-    brightest = np.array(sorted(source_pars, key=lambda coord: coord[2])[:5])
-    clip_avg_par = np.mean(brightest, axis=0)
-    clip_avg_fwhm = process_par(clip_avg_par, 'Clipped Avg', fittype=fittype)
+    # brightest = np.array(sorted(source_pars, key=lambda coord: coord[2])[:5])
+    # clip_avg_par = np.mean(brightest, axis=0)
+    # clip_avg_fwhm = process_par(clip_avg_par, 'Clipped Avg', fittype=fittype)
     
     psf_file = Path(f'{str(base)}.psf.fits').resolve()  # PSF info stored here
     stack_par = fit_psf_stack(base, 1, fittype=fittype, ofile=psf_file).par
@@ -87,10 +86,6 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all', fittype='circula
 
     fit_par = stack_par
     fit_fwhm = stack_fwhm
-    # fit_par = clip_avg_par
-    # fit_fwhm = clip_avg_fwhm
-    # fit_par = avg_par
-    # fit_fwhm = avg_fwhm
     
     init_phot_data = Table()
     init_phot_data.add_column(source_coords[:,0], name='x_fit')
@@ -100,7 +95,7 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all', fittype='circula
     init_phot_data.add_column(list(range(len(source_pars))), name='group_id')
     init_phot_data.add_column([1] * len(source_pars), name='group_size')
     
-    if plot:
+    if plot_inters:
         plot_sources(image, init_phot_data, fit_fwhm)
     
     img.data[:,bad_columns] = fit_par[5]
@@ -142,9 +137,9 @@ def analyze_sources(image, plot=False, thresh=10.0, mode='all', fittype='circula
     
     logger.debug(f"Sources Found (Iter 2): \n{log_astropy_table(phot_data)}")
         
-    if plot:
+    if plot_inters:
         plot_groups(phot_data, source_coords, source_fits, base)
-        
+    if plot_final:
         plot_sources(image, phot_data, fit_fwhm)
     
     return phot_data
@@ -154,7 +149,7 @@ def plot_groups(phot_data, source_coords, source_fits, base):
     group_data = phot_data[phot_data['group_size'] > 1]
     group_ids = list(sorted(set(group_data['group_id'])))
     for id in group_ids:
-        logger.info(f"Group {id} has multiple fitted PSF's: displaying original source")
+        logger.warning(f"Group {id} has multiple fitted PSF's: displaying original source")
         group = phot_data[phot_data['group_id'] == id]
         group_x = np.median(group['x_fit'])
         group_y = np.median(group['y_fit'])
@@ -180,7 +175,6 @@ def match_coords(target, search_space, max_dist=2.0):
 
 
 def plot_sources(image, phot_data, given_fwhm):
-    # bad_sources = phot_data['flags'] > 1
     good_phot_data = phot_data[phot_data['group_size'] <= 1]
     bad_phot_data = phot_data[phot_data['group_size'] > 1]
     
@@ -239,18 +233,18 @@ def discrete_moffat_integral(par, fittype, step_size=1.0):
     grid_x, grid_y = np.meshgrid(x_coords, y_coords)
 
     # Calculate flux in each pixel
-    if fittype == 'circular':
+    if fittype == 'circ':
         pixel_fluxes = Moffat2D.evaluate(grid_x, grid_y, par[2], 0, 0, par[3], par[4])
-    elif fittype == 'elliptical':
+    elif fittype == 'ellip':
         pixel_fluxes = MoffatElliptical2D.evaluate(grid_x, grid_y, par[2], 0, 0, par[3], par[4], par[5], par[6])
     pixel_fluxes *= step_size**2
     return np.sum(pixel_fluxes)
 
 def process_par(par, label, fittype):
-    if fittype == 'circular':
+    if fittype == 'circ':
         fwhm = gamma_to_fwhm(par[3], par[4])
         logger.debug(f"{label} Moffat fit parameters: \namplitude = {par[2]}, gamma = {par[3]}, alpha = {par[4]}, bkgd = {par[5]}")
-    elif fittype == 'elliptical':
+    elif fittype == 'ellip':
         fwhm1 = gamma_to_fwhm(par[3], par[6])
         fwhm2 = gamma_to_fwhm(par[4], par[6])
         fwhm = (fwhm1 + fwhm2)/2
