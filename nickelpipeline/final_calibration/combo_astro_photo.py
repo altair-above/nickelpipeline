@@ -2,50 +2,41 @@
 
 import numpy as np
 import logging
-
-from astropy.modeling.fitting import LevMarLSQFitter
-from astropy.modeling.functional_models import Moffat2D
-from photutils.detection import IRAFStarFinder
-from photutils.aperture import CircularAperture
-from photutils.psf import IterativePSFPhotometry, make_psf_model
-from photutils.background import MMMBackground, MADStdBackgroundRMS, LocalBackground
-from photutils.psf import SourceGrouper
-
 from pathlib import Path
-from astropy.table import Table
-from matplotlib import pyplot as plt
-from astropy.visualization import ZScaleInterval
-
-from scipy.spatial import KDTree
-
-from nickelpipeline.convenience.fits_class import Fits_Simple
-from nickelpipeline.convenience.nickel_data import bad_columns
-from nickelpipeline.convenience.log import log_astropy_table
-
-from nickelpipeline.photometry.moffat_model_photutils import MoffatElliptical2D
-from nickelpipeline.psf_analysis.moffat.stamps import generate_stamps
-from nickelpipeline.psf_analysis.moffat.fit_psf import fit_psf_single, fit_psf_stack, psf_plot
-
 from astropy.io import ascii, fits
 from astropy.wcs import WCS
 
+from nickelpipeline.convenience.log import log_astropy_table
 
-def convert_coords(phot_data_path, astrometric_img_path):
-    phot_data_path = Path(phot_data_path)
+
+logger = logging.getLogger(__name__)
+
+def convert_coords(phot_data_inpath, phot_data_outpath, astrometric_img_path):
     
+    phot_data_path = Path(phot_data_inpath)
     phot_data = ascii.read(phot_data_path, format='csv')
     
-    # Read the input FITS file
-    data, header = fits.getdata(phot_data_path, header=True)
     # Create a WCS object from the input FITS header
+    _, header = fits.getdata(astrometric_img_path, header=True)
     wcs = WCS(header)
     
     x_coords = phot_data['x_fit']
     y_coords = phot_data['y_fit']
     # Get the array of all RA coordinates and all Dec coordinates
     world_coords = wcs.all_pix2world(x_coords, y_coords, 0)  # 0 specifies no origin offset
-    longitude_coords = world_coords[0]
-    latitude_coords = world_coords[1]
+    print(world_coords)
+    
+    col_index = phot_data.colnames.index('y_fit') + 1
+    phot_data.add_column(world_coords[0], name='ra', index=col_index)
+    phot_data.add_column(world_coords[1], name='dec', index=col_index + 1)
+    phot_data['ra'].info.format = '.3f'
+    phot_data['dec'].info.format = '.3f'
+    
+    phot_data.write(phot_data_outpath, format='csv', overwrite=True)
+    
+    logger.debug(f"Source Catalog w/ Sky Coordinates: \n{log_astropy_table(phot_data)}")
+    logger.info(f"Saving source catalog w/ RA/Dec coords to {phot_data_outpath}")
+    return phot_data_outpath
     
     
     

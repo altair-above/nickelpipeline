@@ -300,26 +300,8 @@ def consolidate_groups(phot_data, preserve=[]):
         new_data.add_row(new_row)
     
     new_data.sort('group_id')
-    new_data = format_table(new_data)
     logger.debug(f"Consolidated sources: \n{log_astropy_table(new_data)}")
     return new_data
 
 
-def format_table(phot_data):
-    if 'flux_fit' in phot_data.colnames:
-        colnames = ['group_id', 'group_size', 'flags', 'x_fit', 'y_fit', 
-                    'flux_fit', 'local_bkg', 'x_err', 'y_err', 'id', 
-                    'iter_detected', 'npixfit', 'qfit', 'cfit']
-    else:
-        colnames = ['group_id', 'group_size', 'flags', 'x_fit', 'y_fit', 
-                    'flux_psf', 'flux_aper', 'ratio_flux', 'local_bkg', 
-                    'x_err', 'y_err', 'id', 
-                    'iter_detected', 'npixfit', 'qfit', 'cfit']
-    concise_data = phot_data[colnames]
-    for col in colnames:
-        if isinstance(concise_data[col][0], np.float64):
-            concise_data[col].info.format = '.3f'
-    
-    return concise_data
-        
     

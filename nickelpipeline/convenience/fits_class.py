@@ -55,6 +55,7 @@ class Fits_Simple:
             image_path = Path(image_path)
             self.path = image_path
             self.filename = image_path.name
+            self.filenamebase = image_path.name.split('_')[0]
             self._mask = None
     
     @property
@@ -117,6 +118,12 @@ class Fits_Simple:
     def exptime(self):
         try:
             return self.header["EXPTIME"]
+        except KeyError:
+            return None
+    @property
+    def airmass(self):
+        try:
+            return self.header["AIRMASS"]
         except KeyError:
             return None
     

@@ -17,6 +17,8 @@ class PhotometryPipeline(scriptbase.ScriptBase):
                             help='Path to directory to save results. Defaults to /photometric/ in same directory as reddir')
         parser.add_argument('-t', '--thresh', default=8.0, type=float,
                             help='Threshold for source detection = background std * thresh.')
+        parser.add_argument('-g', '--group', action='store_true', 
+                            help='Consolidates groups of sources detected together into one source')
         parser.add_argument('-m', '--mode', default='all', type=str,
                             help='Mode to run photutils PSFPhotometry. `all` recommended.',
                             choices=['all', 'new'])
@@ -38,9 +40,7 @@ class PhotometryPipeline(scriptbase.ScriptBase):
     def main(args):
         
         from pathlib import Path
-        import logging
 
-        from nickelpipeline.convenience.log import adjust_global_logger
         from nickelpipeline.photometry.psf_photometry import psf_analysis, consolidate_groups, format_table
         from nickelpipeline.photometry.aperture_photometry import aperture_analysis
         from nickelpipeline.convenience.dir_nav import unzip_directories
@@ -64,11 +64,16 @@ class PhotometryPipeline(scriptbase.ScriptBase):
                                     mode=args.mode, fittype=args.fittype, 
                                     plot_final=args.plot_final, 
                                     plot_inters=args.plot_inters,)
-            psf_data_consol = consolidate_groups(psf_data)
-            all_data = aperture_analysis(psf_data_consol, file)
+            if args.group:
+                psf_data = consolidate_groups(psf_data)
+            all_data = aperture_analysis(psf_data, file)
             
             source_catalogs.append(all_data)
-            all_data.write(output_dir / f'{file.stem}_srcs.csv', format='csv', overwrite=True)  
+            if args.group:
+                output_file = output_dir / f'{file.stem.split('_')[0]}_photsrcs_consolidated.csv'
+            else:
+                output_file = output_dir / f'{file.stem.split('_')[0]}_photsrcs.csv'
+            all_data.write(output_file, format='csv', overwrite=True)  
         
         return source_catalogs
         
