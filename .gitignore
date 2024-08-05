@@ -152,6 +152,10 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# setuptools generated version files #
+######################################
+*/version.py
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
@@ -170,6 +174,8 @@ cython_debug/
 # psf_analysis_moffat/graphs
 __pycache__
 old_git
+
+docs/sphinx_warnings.out
 
 all_testing_code/test-data-05-12
 all_testing_code/test-data-06-24

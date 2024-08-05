@@ -18,7 +18,7 @@ clean:
 	rm -rf $(LOCALFILES)
 
 apirst:
-	SPHINX_APIDOC_OPTIONS=$(SPHINXAPIOPT) $(SPHINXAPI) --separate -o ./api ../nickelpipeline ../nickelpipeline/version.py
+	SPHINX_APIDOC_OPTIONS=$(SPHINXAPIOPT) $(SPHINXAPI) --separate -o ./api ../nickelpipeline ../nickelpipeline/version.py ../nickelpipeline/reduction/old_basic/*
 
 htmlonly:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
