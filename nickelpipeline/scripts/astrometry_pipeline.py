@@ -41,8 +41,11 @@ class AstrometryPipeline(scriptbase.ScriptBase):
         logger = logging.getLogger(__name__)
               
         logger.debug(f"Extracting images from {args.reddir}")
-        dirs = [dir for dir in Path(args.reddir).iterdir()]
-        red_files = unzip_directories(dirs, output_format='Path')
+        dirs = [dir for dir in Path(args.reddir).iterdir() if dir.is_dir()]
+        if len(dirs) > 0:
+            red_files = unzip_directories(dirs, output_format='Path')
+        else:
+            red_files = unzip_directories([args.reddir], output_format='Path')
         if args.output_dir is None:
             output_dir = str(red_files[0].parent.parent.parent / 'astrometric')
         

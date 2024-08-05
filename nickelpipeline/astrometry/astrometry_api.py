@@ -245,7 +245,7 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
     # Makes output folder if it doesn't already exist
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    newimg_dir = output_dir / 'img'
+    newimg_dir = output_dir / 'astroimg'
     newimg_dir.mkdir(parents=True, exist_ok=True)
     corr_dir = output_dir / 'corr'
     corr_dir.mkdir(parents=True, exist_ok=True)
@@ -314,8 +314,9 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
                 jobid_found = True
             except:
                 continue
-                
-        logger.info(f"JobID = {jobid}")
+        
+        logger.info("Image accepted--beginning solve.")
+        logger.debug(f"JobID = {jobid}")
 
         # Every t (currently 15) seconds, check if image has been calibrated
         # Exit & fail if taking > 10 minutes to calibrate
@@ -345,13 +346,13 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
         if success:
             logger.debug(f"Trying to save calibrated image & corr")
             # Create path to image folder
-            output_path_stem = image_path.stem
+            output_path_stem = image_path.stem.split('_')[0]
             
             # Get FITS file & save to output path (in folder just created ^)
             url_image = f"http://nova.astrometry.net/new_fits_file/{jobid}"
             url_corr = f"http://nova.astrometry.net/corr_file/{jobid}"
-            output_path_img = output_dir / f"{output_path_stem[:-5]}.fits"
-            output_path_corr = output_dir / f"{output_path_stem[:-5]}_corr.fits"
+            output_path_img = newimg_dir / f"{output_path_stem}_astro.fits"
+            output_path_corr = corr_dir / f"{output_path_stem}_astro_corr.fits"
             
             new_image = requests.get(url_image)
             corr_table = requests.get(url_corr)
@@ -362,7 +363,7 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
                 corr.write(corr_table.content)
             
             # Return output_path for other functions to find this file
-            logger.info(f"Calibrated image & corr saved to {url_image} (corr w/ _corr.fits)")
+            logger.info(f"Calibrated image & corr saved to {output_path_img} (corr w/ _corr.fits)")
             if mode == 'image':
                 return output_path_img
             elif mode == 'corr':

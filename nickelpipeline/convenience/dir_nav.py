@@ -1,5 +1,8 @@
+import logging
 from pathlib import Path
 from nickelpipeline.convenience.fits_class import Fits_Simple
+
+logger = logging.getLogger(__name__)
 
 def categories_from_conditions(condition_tuples: list, images: list) -> dict:
     """
@@ -52,7 +55,7 @@ def unzip_directories(path_list: list, output_format: str = 'Fits_Simple',
                     try:
                         images.append(Fits_Simple(file))
                     except (KeyError, OSError):
-                        pass
+                        logger.debug(f"unzip_directories() threw KeyError or OSError on {file}")
             else:
                 images += [output(file) for file in elem_path.iterdir()]
         elif elem_path.is_file():

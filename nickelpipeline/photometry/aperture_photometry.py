@@ -40,15 +40,10 @@ def aperture_analysis(phot_data, image, aper_size=8.0):
 
 
 def format_table(phot_data):
-    if 'flux_fit' in phot_data.colnames:
-        colnames = ['group_id', 'group_size', 'flags', 'x_fit', 'y_fit', 
-                    'flux_fit', 'local_bkg', 'x_err', 'y_err', 'id', 
-                    'iter_detected', 'npixfit', 'qfit', 'cfit']
-    else:
-        colnames = ['group_id', 'group_size', 'flags', 'x_fit', 'y_fit', 
-                    'flux_psf', 'flux_aper', 'ratio_flux', 'local_bkg', 
-                    'x_err', 'y_err', 'id', 
-                    'iter_detected', 'npixfit', 'qfit', 'cfit']
+    colnames = ['group_id', 'group_size', 'flags', 'x_fit', 'y_fit', 
+                'flux_psf', 'flux_aper', 'ratio_flux', 'local_bkg', 
+                'x_err', 'y_err', 'airmass', 'id',
+                'iter_detected', 'npixfit', 'qfit', 'cfit']
     concise_data = phot_data[colnames]
     for col in colnames:
         if isinstance(concise_data[col][0], np.float64):

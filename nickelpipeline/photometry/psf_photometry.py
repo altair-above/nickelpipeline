@@ -134,6 +134,7 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     phot_data = phot(data=img.data, mask=img.mask,
                      init_params=Table(sources['xcentroid', 'ycentroid', 'flux'],
                                        names=('x_0', 'y_0', 'flux_0')))
+    phot_data.add_column(image.airmass * np.ones(len(phot_data)), name='airmass')
     
     logger.debug(f"Sources Found (Iter 2): \n{log_astropy_table(phot_data)}")
         
@@ -175,6 +176,12 @@ def match_coords(target, search_space, max_dist=2.0):
 
 
 def plot_sources(image, phot_data, given_fwhm):
+    
+    if 'flux_fit' in phot_data.colnames:
+        flux_name = 'flux_fit'
+    else:
+        flux_name = 'flux_psf'
+    
     good_phot_data = phot_data[phot_data['group_size'] <= 1]
     bad_phot_data = phot_data[phot_data['group_size'] > 1]
     
@@ -203,7 +210,7 @@ def plot_sources(image, phot_data, given_fwhm):
     
     # Annotate good sources with flux_fit values
     for i in range(len(good_phot_data)):
-        plt.text(x_good[i], y_good[i]+17, f'{good_phot_data["flux_fit"][i]:.0f}', color='white', fontsize=8, ha='center', va='center')
+        plt.text(x_good[i], y_good[i]+17, f'{good_phot_data[flux_name][i]:.0f}', color='white', fontsize=8, ha='center', va='center')
     
     group_ids = set(bad_phot_data['group_id'])
     for id in group_ids:
@@ -211,7 +218,7 @@ def plot_sources(image, phot_data, given_fwhm):
         group_x = np.mean(group['x_fit']) + 15
         group_y = np.mean(group['y_fit'])
         for i in range(len(group)):
-            plt.text(group_x, group_y+(i-1)*20, f'{group["group_id"][i]:.0f}:{group["iter_detected"][i]:.0f}: {group["flux_fit"][i]:.0f}', color='red', fontsize=8, ha='left', va='center')
+            plt.text(group_x, group_y+(i-1)*20, f'{group["group_id"][i]:.0f}:{group["iter_detected"][i]:.0f}: {group[flux_name][i]:.0f}', color='red', fontsize=8, ha='left', va='center')
     
     plt.gcf().set_dpi(300)
     plt.show()
@@ -292,6 +299,7 @@ def consolidate_groups(phot_data, preserve=[]):
             'x_err': np.sum(group['x_err']),
             'y_err': np.sum(group['y_err']),
             'flux_err': np.sum(group['flux_err']),
+            'airmass': group['airmass'][0],
             'npixfit': np.sum(group['npixfit']),
             'qfit': np.average(group['qfit'], weights=abs(group['flux_fit'])),
             'cfit': np.average(group['cfit'], weights=abs(group['flux_fit'])),

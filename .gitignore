@@ -175,6 +175,7 @@ all_testing_code/test-data-05-12
 all_testing_code/test-data-06-24
 all_testing_code/test-data-06-26
 all_testing_code/test-data-06-26-2
+all_testing_code/test-data-06-26-3
 all_testing_code/test-data-06-24-2
 all_testing_code/test_code/psf_analysis/moffat/proc_files
 all_testing_code/graphs
@@ -186,3 +187,4 @@ all_testing_code/test_code/photometry/test_imgs
 *.log.1
 *.log.2
 *.log.3
+*proc_files

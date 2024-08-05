@@ -232,3 +232,11 @@ NEXT BIG STEP
 |- astrometric solution
 
 FIX CCD SHAPE AND FOV SHAPE USING HEADER
+
+from pathlib import Path
+root = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/astrometric/astroimg')
+newfolder = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/astrometric/corr')
+for file in root.iterdir():
+    if 'corr' in file.name:
+        file.rename(newfolder / file.name)
+
