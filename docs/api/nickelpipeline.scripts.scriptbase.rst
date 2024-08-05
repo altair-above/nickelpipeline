@@ -1,7 +1,7 @@
-nickelpipeline.convenience.graphs module
+nickelpipeline.scripts.scriptbase module
 ========================================
 
-.. automodule:: nickelpipeline.convenience.graphs
+.. automodule:: nickelpipeline.scripts.scriptbase
    :members:
    :private-members:
    :undoc-members:

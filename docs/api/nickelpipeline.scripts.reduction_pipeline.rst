@@ -1,7 +1,7 @@
-nickelpipeline.psf\_analysis.moffat.stamps module
+nickelpipeline.scripts.reduction\_pipeline module
 =================================================
 
-.. automodule:: nickelpipeline.psf_analysis.moffat.stamps
+.. automodule:: nickelpipeline.scripts.reduction_pipeline
    :members:
    :private-members:
    :undoc-members:

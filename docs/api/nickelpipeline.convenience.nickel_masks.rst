@@ -1,7 +1,7 @@
-nickelpipeline.convenience.display\_fits module
+nickelpipeline.convenience.nickel\_masks module
 ===============================================
 
-.. automodule:: nickelpipeline.convenience.display_fits
+.. automodule:: nickelpipeline.convenience.nickel_masks
    :members:
    :private-members:
    :undoc-members:
