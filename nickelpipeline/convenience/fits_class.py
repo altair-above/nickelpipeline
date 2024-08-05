@@ -19,11 +19,6 @@ class Fits_Simple:
     Attributes:
         path (Path): The file path to the FITS image.
         filename (str): The name of the FITS file.
-        header (Header): The header information of the FITS file.
-        data (ndarray): The data contained in the FITS file.
-        object (str): The object name from the FITS header.
-        filtnam (str): The filter name from the FITS header.
-        exptime (float): The exposure time from the FITS header.
     """
     
     def __new__(cls, *args, **kwargs):
@@ -59,16 +54,19 @@ class Fits_Simple:
     
     @property
     def header(self):
+        """The header information of the FITS file."""
         with fits.open(self.path) as hdul:
             return hdul[0].header
     
     @property
     def data(self):
+        """The data contained in the FITS file."""
         with fits.open(self.path) as hdul:
             return hdul[0].data
         
     @property
     def mask(self):
+        """Mask for the fits data."""
         if self._mask is None:
             with fits.open(self.path) as hdul:
                 try:
@@ -103,18 +101,21 @@ class Fits_Simple:
     
     @property
     def object(self):
+        """The object name from the FITS header."""
         try:
             return self.header["OBJECT"]
         except KeyError:
             return None
     @property
     def filtnam(self):
+        """The filter name from the FITS header."""
         try:
             return self.header["FILTNAM"]
         except KeyError:
             return None
     @property
     def exptime(self):
+        """The exposure time from the FITS header."""
         try:
             return self.header["EXPTIME"]
         except KeyError:

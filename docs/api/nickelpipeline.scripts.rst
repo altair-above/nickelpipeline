@@ -7,6 +7,8 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   nickelpipeline.scripts.astrometry_pipeline
+   nickelpipeline.scripts.photometry_pipeline
    nickelpipeline.scripts.reduction_pipeline
    nickelpipeline.scripts.scriptbase
 

@@ -14,6 +14,7 @@ Submodules
    nickelpipeline.convenience.graphs
    nickelpipeline.convenience.log
    nickelpipeline.convenience.nickel_data
+   nickelpipeline.convenience.nickel_masks
 
 Module contents
 ---------------
