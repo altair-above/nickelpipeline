@@ -8,6 +8,7 @@
         "./test_code/psf_analysis_moffat/proc_files",
         "./all_testing_code/graphs",
         "./all_testing_code/old_code",
+        "*.fits"
         // "./bin_stats_analysis",
     ]
 }

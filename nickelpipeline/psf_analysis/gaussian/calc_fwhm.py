@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 
 from astropy.stats import sigma_clipped_stats
 from astropy.modeling.fitting import LevMarLSQFitter
@@ -16,13 +17,17 @@ from astropy.visualization import ZScaleInterval
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats import SigmaClip
 
-#from nickelpipeline.reduction.reduction_split import process_single
+from nickelpipeline.reduction.old_basic.reduction_split import process_single
 from nickelpipeline.convenience.fits_class import Fits_Simple
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
-from nickelpipeline.convenience.nickel_data import bad_columns
+from nickelpipeline.convenience.nickel_data import bad_columns, bad_photometry_columns, ccd_shape
+from nickelpipeline.convenience.log import log_astropy_table
+from nickelpipeline.convenience.display_fits import display_nickel
 
 # from astrometry.plate_scale import avg_plate_scale
 
+logger = logging.getLogger(__name__)
+np.set_printoptions(edgeitems=25)
 
 def testing():
     # directories = [Path(f'C:/Users/allis/Documents/2024-2025_Local/Akamai Internship/pipeline-testing/test-data-06-24/raw-reduced/109_199_{filt}') for filt in ['B', 'V', 'R', 'I']]
@@ -58,14 +63,18 @@ def testing():
 
 
 
-def plot_sources(f, img, x, y, given_fwhm, ofile=None):
+def plot_sources(image, x, y, given_fwhm):
+    logger.info(f'Image {image}')
     positions = np.transpose((x, y))
     apertures = CircularAperture(positions, r=2*given_fwhm)
-    # Apply ZScaleInterval
+    
     interval = ZScaleInterval()
-    vmin, vmax = interval.get_limits(img)
-    plt.imshow(img, origin='lower', vmin=vmin, vmax=vmax,
-                  interpolation='nearest')
+    vmin, vmax = interval.get_limits(image.masked_array)
+    cmap = plt.get_cmap()
+    cmap.set_bad('r', alpha=0.5)
+
+    plt.imshow(image.masked_array, origin='lower', vmin=vmin, vmax=vmax,
+               cmap=cmap, interpolation='nearest')
     plt.colorbar()
     apertures.plot(color='r', lw=1.5, alpha=0.5)
     plt.show()
@@ -80,26 +89,13 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
     
     if not isinstance(image, Fits_Simple):
         image = Fits_Simple(image)
+    logger.debug(f"calc_fwhm() called on image {image.filename}")
     
     sig2fwhm = np.sqrt(8*np.log(2))
     # aper_size = 1.5*default_fwhm/2
 
-    unmasked_img = image.data
-    # Mask specific bad columns
-    column_mask = np.zeros(unmasked_img.shape[1], dtype=bool)
-    column_mask[bad_columns] = True
-
-    # Create a masked array with the masked columns
-    img = np.ma.masked_array(unmasked_img, mask=np.zeros_like(unmasked_img, dtype=bool))
-    img.mask[:, column_mask] = True
-
-    # Mask specific rows (sections)
-    rows_to_mask = np.arange(0, 5).tolist() + np.arange(unmasked_img.shape[0]-50, unmasked_img.shape[0]).tolist()
-    row_mask = np.zeros(unmasked_img.shape[0], dtype=bool)
-    row_mask[rows_to_mask] = True
-
-    # Update the masked array to include the masked rows
-    img.mask[row_mask, :] = True
+    img = image.masked_array
+    img.data[:,bad_columns] = 0
 
     #----------------------------------------------------------------------
     # Do a first source detection using the default FWHM
@@ -108,6 +104,8 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
     starfind = IRAFStarFinder(fwhm=default_fwhm, threshold=thresh*std,
                               minsep_fwhm=0.1, sky=0.0, peakmax=55000,)
     sources = starfind(data=(img.data - median), mask=img.mask)
+    # if sources is None:
+        
     if verbose:
         print(f'Found {len(sources)} sources in {image}.')
     # This determines the distance of each source to every other
@@ -119,7 +117,9 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
                 + np.square(sources['ycentroid'][:,None]
                             - sources['ycentroid'][None,:]))
     indx = (dist < default_fwhm/1.7) & (j > i)
+    logger.debug(f"{sum(indx)} sources removed for being too close")
     sources = sources[np.logical_not(np.any(indx, axis=0))]
+    logger.debug(f"Sources Found (Iter 1): \n{log_astropy_table(sources)}")
 
     #----------------------------------------------------------------------
     # Attempt to improve the source detection by improving the FWHM estimate
@@ -150,8 +150,10 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
                      init_params=Table(sources['xcentroid', 'ycentroid', 'flux'],
                                        names=('x_0', 'y_0', 'flux_0')))
 
-    indx = phot_data['iter_detected'] == 1
-    fwhm = np.median(np.abs(phot_data['sigma_fit'][indx]))*sig2fwhm
+    logger.debug(f"Sources Found (Iter 2): \n{log_astropy_table(phot_data)}")
+
+    phot_data = filter_phot_data(phot_data)
+    fwhm = np.median(np.abs(phot_data['sigma_fit']))*sig2fwhm
     
     #----------------------------------------------------------------------
     # Refit using the "improved" FWHM
@@ -167,10 +169,12 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
                                   fitter=fitter, fit_shape=win, maxiters=2,
                                   fitter_maxiters=2, aperture_radius = aper_size)
     phot_data = phot(data=img.data, mask=img.mask,
-                     init_params=Table([phot_data['x_fit'][indx],
-                                        phot_data['y_fit'][indx],
-                                        phot_data['flux_fit'][indx]],
+                     init_params=Table([phot_data['x_fit'],
+                                        phot_data['y_fit'],
+                                        phot_data['flux_fit']],
                                         names=('x_0', 'y_0', 'flux_0')))
+    
+    logger.debug(f"Sources Found (Iter 2): \n{log_astropy_table(phot_data)}")
     #----------------------------------------------------------------------
     # Extract the source which_source, & calculate fwhm
     #----------------------------------------------------------------------
@@ -183,19 +187,20 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
         print(f"flux of star chosen = {phot_data['flux_init'][chosen_star]}")
         phot_data = phot_data[indices_by_peak[chosen_star]]
     
-    indx = phot_data['iter_detected'] == 1
-    psf_fwhm_median = np.median(phot_data['sigma_fit'][indx])*sig2fwhm
-    psf_fwhm_std = np.std(phot_data['sigma_fit'][indx]*sig2fwhm)
+    phot_data = filter_phot_data(phot_data)
+    psf_fwhm_median = np.median(phot_data['sigma_fit'])*sig2fwhm
+    psf_fwhm_std = np.std(phot_data['sigma_fit']*sig2fwhm)
 
     if plot:
-        plot_sources(image, img, phot_data['x_fit'][indx], phot_data['y_fit'][indx],fwhm)
+        plot_sources(image, phot_data['x_fit'], phot_data['y_fit'],fwhm)
+    plot_sources(image, phot_data['x_fit'], phot_data['y_fit'],fwhm)
     
     #----------------------------------------------------------------------
     # AperatureStats Analysis
     #----------------------------------------------------------------------
     if mode == 'aper':
-        coordinates = list(zip(phot_data['x_fit'][indx], phot_data['y_fit'][indx]))
-        local_bkg_values = local_bkg(img, phot_data['x_fit'][indx], phot_data['y_fit'][indx])
+        coordinates = list(zip(phot_data['x_fit'], phot_data['y_fit']))
+        local_bkg_values = local_bkg(img, phot_data['x_fit'], phot_data['y_fit'])
         apertures = CircularAperture(coordinates, r=aper_size)
         aperstats = ApertureStats(img, apertures, local_bkg=local_bkg_values)
         
@@ -207,9 +212,9 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
     # Sigma Clip PSF FWHMs
     #----------------------------------------------------------------------
     # (psf_fwhm_median, aper_fwhm_median, psf_fwhm_std, aper_fwhm_std)
-    all_fwhms = np.array(phot_data['sigma_fit'][indx])*sig2fwhm
-    all_x = np.array(phot_data['x_fit'][indx])
-    all_y = np.array(phot_data['y_fit'][indx])
+    all_fwhms = np.array(phot_data['sigma_fit'])*sig2fwhm
+    all_x = np.array(phot_data['x_fit'])
+    all_y = np.array(phot_data['y_fit'])
     # Create a SigmaClip object and apply it to get a mask
     sigma_clip = SigmaClip(sigma=3, maxiters=5)
     masked_fwhms = sigma_clip(all_fwhms)
@@ -222,8 +227,6 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
     if verbose:
         print("Number of sources removed =", len(all_x) - len(clipped_x))
         print(clipped_fwhms)
-        print("min_fwhm = ", min_fwhm)
-        print(fwhm_residuals)
     
     #----------------------------------------------------------------------
     # Return
@@ -241,17 +244,45 @@ def calc_fwhm(image, mode='psf', plot=False, which_source=None, verbose=True):
         # Approximating "removing" the atmospheric FWHM, leaving (mostly) the telescopic
         min_fwhm = np.min(clipped_fwhms)
         fwhm_residuals = np.sqrt(clipped_fwhms**2 - min_fwhm**2)
+        if verbose:
+            print("min_fwhm = ", min_fwhm)
+            print(fwhm_residuals)
         return (clipped_x, clipped_y, fwhm_residuals)
     else:
         raise ValueError("mode must = 'psf', 'aper', 'fwhm', 'fwhms, std', or 'fwhm coords'")
 
 
-#def fwhm_from_raw(image, bias, flat):
-#    image = Path(image)
-#    reduced_image = process_single(image, bias, flat)
-#    fwhm = calc_fwhm(reduced_image)
-#    print(f"FWHM for image {image.name} = {fwhm}")
-#    return fwhm
+def filter_phot_data(table):
+    """
+    Removes all rows from the table with coordinates outside ccd_shape
+    and with 'iter_detected' == 1.
+    
+    Parameters:
+    table (astropy.table.Table): The input table.
+    ccd_shape (tuple): A tuple (width, height) representing the shape of the CCD.
+    
+    Returns:
+    astropy.table.Table: The filtered table.
+    """
+    # Create boolean masks for each condition
+    indx1 = table['iter_detected'] == 1 #np.max(table['iter_detected'])
+    indx2 = table['x_fit'] > 0
+    indx3 = table['y_fit'] > 0
+    indx4 = table['x_fit'] < ccd_shape[0]
+    indx5 = table['y_fit'] < ccd_shape[1]
+    
+    # Combine all masks using logical AND
+    combined_mask = indx2 & indx3 & indx4 & indx5 & indx1
+    
+    return table[combined_mask]
+
+
+def fwhm_from_raw(image, bias, flat):
+    image = Path(image)
+    reduced_image = process_single(image, bias, flat)
+    fwhm = calc_fwhm(reduced_image)
+    print(f"FWHM for image {image.name} = {fwhm}")
+    return fwhm
 
 
 def batch_fwhm(path_list, plot=False, max_std=0.5, mode='psf'):
@@ -285,4 +316,3 @@ def batch_fwhm(path_list, plot=False, max_std=0.5, mode='psf'):
 def avg_fwhm(directories, files=None, plot=False, max_std=0.5):
     avg, _ = batch_fwhm(directories, files=files, plot=plot, max_std=max_std)
     return avg
-

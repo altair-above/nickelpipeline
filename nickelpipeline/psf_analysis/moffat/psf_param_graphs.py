@@ -8,8 +8,7 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 from scipy import stats
 
-from nickelpipeline.psf_analysis.moffat.stamps import generate_stamps_bulk
-from nickelpipeline.psf_analysis.moffat.fit_psf import fit_psf_stack, psf_plot
+from nickelpipeline.psf_analysis.moffat.moffat_fitting import get_graphable_pars
 
 from nickelpipeline.convenience.dir_nav import categories_from_conditions, unzip_directories
 
@@ -36,7 +35,7 @@ def graph_psf_pars_bulk(path_list, condition_tuples, verbose=False):
     categories = categories_from_conditions(condition_tuples, images)
     
     # Fit PSFs & extract parameters
-    results = zip(*[(category,) + extract_psf_par(file_list, 
+    results = zip(*[(category,) + get_graphable_pars(file_list, 
                                                   str(category).replace('.', '_'), 
                                                   verbose=verbose)
                     for category, file_list in categories.items()])
@@ -72,7 +71,7 @@ def graph_psf_pars_many(path_list, condition_tuples, verbose=False):
     # Process each category and its file list
     for category, file_list in categories.items():
         # Fit PSFs & extract parameters
-        fwhms, eccs, phis = zip(*(extract_psf_par([file], file.stem, verbose=verbose) 
+        fwhms, eccs, phis = zip(*(get_graphable_pars([file], file.name.split('_')[0], verbose=verbose) 
                                   for file in file_list))
         
         # Calculate mean and confidence intervals
@@ -120,7 +119,7 @@ def graph_psf_pars_individuals(path_list, verbose=False):
     images = unzip_directories(path_list, output_format='Fits_Simple')
     
     # Fit PSFs and extract parameters for each image
-    results = [(image.image_num,) + extract_psf_par([image,], image.path.stem, verbose=verbose)
+    results = [(image.image_num,) + get_graphable_pars([image,], image.path.name.split('_')[0], verbose=verbose)
                for image in images]
     
     # Sort results based on image numbers
@@ -136,56 +135,6 @@ def graph_psf_pars_individuals(path_list, verbose=False):
                 xlabel=img_num_label, ylabel=label, 
                 title=f'{label} vs. {img_num_label}')
 
-def extract_psf_par(file_paths, group_name, verbose=False):
-    """
-    Fit PSF and extract parameters for given files (all stars in these files are 
-    stacked), storing intermediates in folder proc_files/group_name.
-
-    Args:
-        file_paths (list): List of file paths to analyze.
-        group_name (str): Folder for storing intermediates (proc_files/group_name)
-        verbose (bool): If True, print detailed output during processing.
-
-    Returns:
-        tuple: Average FWHM, FWHM eccentricity, and rotation angle phi.
-    """
-    # Generate image stamps for the given files
-    generate_stamps_bulk(file_paths, group_name, verbose=verbose)
-    
-    # Define directory and base path for processed files
-    proc_dir = Path('.').resolve() / "proc_files"
-    base = proc_dir / group_name / group_name
-    
-    # Fit PSF stack and get the fit results
-    psf_file = Path(f'{str(base)}.psf.fits').resolve()  # PSF info stored here
-    fit = fit_psf_stack(group_name, 1, psf_file, verbose=verbose)
-    
-    # Plot PSF and get FWHM and phi values
-    plot_file = Path(f'{str(base)}.psf.pdf').resolve()  # Plots stored here
-    fwhm1, fwhm2, phi = psf_plot(plot_file, fit, verbose=verbose)
-    
-    # Calculate average FWHM and eccentricity
-    fwhm = (fwhm1 + fwhm2)/2
-    ecc = np.sqrt(np.abs(fwhm1**2 - fwhm2**2))/max(fwhm1, fwhm2)
-    
-    if verbose:
-        print(f"Avg FWHM = {fwhm:3f}")
-        print(f"FWHM_ecc = {ecc:3f}")
-        print(f"Rotation angle phi = {phi:3f}")
-    
-    return fwhm, ecc, phi
-
-def extract_psf_single(file):
-    """
-    Analyze PSF parameters for a single file.
-
-    Args:
-        file (Path): File to analyze.
-
-    Returns:
-        tuple: Average FWHM, FWHM eccentricity, and rotation angle phi.
-    """
-    return extract_psf_par([file], file.stem, verbose=True)
 
 def calc_conf_intervals(data_list, confidence_level=0.95):
     """

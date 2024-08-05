@@ -3,20 +3,27 @@ import requests
 import json
 import time
 import os
+import logging
 from astropy.io import fits
+from pathlib import Path
+from nickelpipeline.convenience.nickel_data import bad_columns
 
-####################################
-#### ASTROMETRY.NET CALIBRATION ####
-####################################
+######################################
+####  ASTROMETRY.NET CALIBRATION  ####
+######################################
 
+logger = logging.getLogger(__name__)
 
-def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=True):
-    """Runs astrometry.net calibration on all images input, and saves the calibrated
+def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
+    """
+    Runs astrometry.net calibration on all images input, and saves the calibrated
     fits files to output_dir. Uses astrometry.net's API.
 
     Args:
-        image_paths (list): list of relative paths (str) to all images
+        image_paths (list): list of paths (str) to all images
         output_dir (str): path to output image folder
+        mode (str): Whether to return paths to calibrated image or source table. 'image' or 'corr'.
+        resolve (bool): If True, re-solves images with previously generated local solves
 
     Returns:
         list: list of relative paths (str) to all calibrated fits images
@@ -26,44 +33,34 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=Tr
     else:
         image_paths = [str(path) for path in image_paths]
     
-    # If running in fast=True, skip all astrometry.net and only access already-
-    # processed images
-    if fast:
-        if verbose:
-            print("Astrometric solve running in fast mode: astrometry.net not used, instead using local copies of astrometric solves")
-        calibrated_fits_paths = []
-        for image_path in image_paths:
-            output_path_stem = os.path.basename(image_path)
-            if mode == 'image':
-                output_path = os.path.join(output_dir, output_path_stem[:-5] + '.fits')
-            elif mode == 'corr':
-                output_path = os.path.join(output_dir, output_path_stem[:-5] + '_corr' + '.fits')
-            if os.path.exists(output_path):
-                calibrated_fits_paths.append(output_path)
-        return calibrated_fits_paths
-    
     # Makes output folder if it doesn't already exist
     os.makedirs(output_dir, exist_ok=True)
     
     # Modify images to remove the Nickel Telescope's bad columns
+    logger.info("Zeroing out masked regions for faster astrometric solves")
     mod_dir = os.path.join(os.path.dirname(output_dir), 'raw-astro-input')   # Directory for modified images
     os.makedirs(mod_dir, exist_ok=True)
-    columns_to_modify = [255, 256, 783, 784, 1002]
-
+    
     mod_paths = []
     for file in image_paths:
-        with fits.open(file) as hdul:
-            data = hdul[0].data
-            for col in columns_to_modify:
-                data[:, col] = 0  # Set the entire column to 0
-            # Save the modified FITS file to the output directory
-            mod_path = os.path.join(mod_dir, os.path.basename(file))
-            mod_paths.append(mod_path)
-            hdul.writeto(mod_path, overwrite=True)
-    
-    print("Connecting to astrometry.net")
+        mod_path = os.path.join(mod_dir, os.path.basename(file))
+        if not os.path.exists(mod_path):
+            with fits.open(file) as hdul:
+                data = hdul[0].data
+                try:
+                    # Creating modified FITS files w/ masked regions set to 0
+                    mask = hdul['MASK'].data
+                    data[mask] = 0
+                except KeyError:
+                    # If no mask in FITS file, sets bad columns = 0
+                    data[:, bad_columns] = 0
+                    logger.debug("No mask in FITS file--masking Nickel bad columns")
+                # Save the modified FITS file to the output directory
+                hdul.writeto(mod_path, overwrite=True)
+        mod_paths.append(mod_path)
     
     # Log in to Nova and get session key
+    logger.info("Connecting to astrometry.net")
     R = requests.post(
         "http://nova.astrometry.net/api/login",
         data={"request-json": json.dumps({"apikey": "fknqiifdlhjliedf"})},  # API key can be found in your account -- currently using Allison's
@@ -73,11 +70,10 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=Tr
     
     # Wrapper function to convert a single photo (to be used on all photos below)
     def convert(image_path):
+        logger.info(f"Submitting image {Path(image_path).name} to astrometry.net")
         # Use session key to upload file(s) to Astrometry
         url = "http://nova.astrometry.net/api/upload"
-        files = {
-            "file": (os.path.basename(image_path), open(image_path, "rb")),
-        }
+        files = {"file": (os.path.basename(image_path), open(image_path, "rb"))}
         data = {
             "request-json": '{"publicly_visible": "y", "allow_modifications": "d", "session": "' + session_key + '", "allow_commercial_use": "d"}' #, "scale_type":"ul", "scale_lower":0.05, "scale_upper":5}'
         }
@@ -86,17 +82,17 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=Tr
         subid = dictionary['subid']
 
         # Get jobid from submission status
-        # Requires checking every 5 sec & waiting until requests.post actually returns something
-        # Otherwise an error will be thrown on some photos
+        # Requires checking every 5 sec until requests.post actually has a JobID
+        # Otherwise an error will be thrown on some images
+        logger.info("Waiting for astrometry.net to accept image. May take several minutes")
+        url = f"http://nova.astrometry.net/api/submissions/{subid}"
         jobid_found = False
         while jobid_found is False:
-            print("Waiting to find Job ID")
-            time.sleep(5)
-
-            url = f"http://nova.astrometry.net/api/submissions/{subid}"
+            logger.debug("Waiting for JobID")
+            time.sleep(10)
             R = requests.post(url)
             dictionary = json.loads(R.text)
-            print(dictionary)
+            logger.debug(dictionary)
             try:
                 jobid = dictionary["jobs"][0]
                 if jobid is None:
@@ -105,32 +101,35 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=Tr
             except:
                 continue
                 
-        print(f"JobID = {jobid}")
+        logger.info(f"JobID = {jobid}")
 
         # Every t (currently 15) seconds, check if image has been calibrated
         # Exit & fail if taking > 10 minutes to calibrate
-        print(f"Time elapsed = {0} seconds")
+        logger.info(f"Time elapsed = {0} seconds")
         url = f"http://nova.astrometry.net/api/jobs/{jobid}"
         def time_check(t, interval):
             time.sleep(interval)
             t += interval
-            print(f"Time elapsed = {t} seconds")
+            logger.info(f"Time elapsed = {t} seconds")
             R = requests.post(url)
             data = json.loads(R.text)
+            logger.debug(data)
             if data['status'] == 'success':
-                print('Job succeeded, getting calibrated fits file')
+                logger.info('Job succeeded, getting calibrated fits file')
                 return True
-            if data['status'] == 'failed':
-                print('Job failed')
+            elif data['status'] == 'failed':
+                logger.warning('Job failed')
                 return False
-            if t > 90:
-                print('Maximum time elapsed... exiting')
+            if t > 225:
+                logger.warning('Maximum time elapsed... exiting')
                 return False
-            time_check(t, interval)
+            return time_check(t, interval)
         
         success = time_check(0, 15)
+        logger.debug(f"success status = {success}")
         
         if success:
+            logger.debug(f"Trying to save calibrated image & corr")
             # Create path to image folder
             output_path_stem = os.path.basename(image_path)
             
@@ -148,17 +147,14 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=Tr
             with open(output_path_corr, 'wb') as corr:
                 corr.write(corr_table.content)
             
-            print(f"Calibrated image & corr saved to {url_image} (or to _corr.fits)")
-            
+            # Return output_path for other functions to find this file
+            logger.info(f"Calibrated image & corr saved to {url_image} (corr w/ _corr.fits)")
             if mode == 'image':
                 return output_path_img
             elif mode == 'corr':
                 return output_path_corr
-            
-            
-            # Return output_path for other functions to find this file
-            return output_path
         else:
+            logger.debug("Saving nothing")
             return None
     
     # Calibrate each image piece and collect output_paths
@@ -169,7 +165,8 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=Tr
             output_path = os.path.join(output_dir, output_path_stem[:-5] + '.fits')
         elif mode == 'corr':
             output_path = os.path.join(output_dir, output_path_stem[:-5] + '_corr' + '.fits')
-        if os.path.exists(output_path):
+        if not resolve and os.path.exists(output_path):
+            logger.info(f"Returning local copy of {Path(image_path).name}'s solution; astrometry.net not used")
             calibrated_fits_paths.append(output_path)
         else:
             try:
@@ -177,7 +174,35 @@ def run_astrometry(image_paths, output_dir, mode='image', fast=False, verbose=Tr
                 if calib_fits is not None:
                     calibrated_fits_paths.append(calib_fits)
             except requests.exceptions.ConnectionError:
-                print(f"***Connection Error(?) encountered; skipping this image***")
+                logger.warning(f"***Connection Error encountered; skipping image {Path(image_path).name} & waiting 15 sec***")
                 time.sleep(15)
         # os.remove(image_path)
+    return calibrated_fits_paths
+
+
+def get_astrometric_solves(image_paths, output_dir, mode):
+    """
+    Returns any local copies of astrometric solves stored from previous runs of
+    run_astrometry(). Skips if image has not yet been solved.
+
+    Args:
+        image_paths (list): list of relative paths (str) to all images
+        output_dir (str): path to output image folder
+        mode (str): Whether to return paths to calibrated image or .corr file w/ source table
+
+    Returns:
+        list: list of relative paths (str) to all calibrated fits images
+    """
+    
+    logger.info("Returning local copies of astrometric solves; astrometry.net not used")
+    calibrated_fits_paths = []
+    for image_path in image_paths:
+        output_path_stem = os.path.basename(image_path)
+        if mode == 'image':
+            output_path = os.path.join(output_dir, output_path_stem[:-5] + '.fits')
+        elif mode == 'corr':
+            output_path = os.path.join(output_dir, output_path_stem[:-5] + '_corr' + '.fits')
+        if os.path.exists(output_path):
+            logger.debug(f"Found calibrated image {Path(image_path).name}; appending to list")
+            calibrated_fits_paths.append(output_path)
     return calibrated_fits_paths

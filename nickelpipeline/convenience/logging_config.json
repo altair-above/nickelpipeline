@@ -21,7 +21,7 @@
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "detailed",
-            "filename": "default_log.log",
+            "filename": "log_all_others.log",
             "mode": "a",
             "encoding": "utf-8",
             "maxBytes": 1000000,
@@ -29,6 +29,11 @@
         }
     },
     "loggers": {
+        "nickelpipeline": {
+            "level": "DEBUG",
+            "handlers": ["console", "file"],
+            "propagate": false
+        },
         "__name__": {
             "level": "DEBUG",
             "handlers": ["console", "file"],
@@ -36,7 +41,7 @@
         }
     },
     "root": {
-        "level": "DEBUG",
+        "level": "WARNING",
         "handlers": ["console", "file"]
     },
     "disable_existing_loggers": false

@@ -158,7 +158,7 @@ class FitMoffat2D:
         p = self.par[self.free]
         result = optimize.least_squares(self.resid, p, method='trf', xtol=1e-12,
                                         bounds=(lb[self.free], ub[self.free]),
-                                        verbose=2) #, jac=self.deriv_resid)
+                                        verbose=0) #, jac=self.deriv_resid)
         self._set_par(result.x)
 
     @staticmethod
@@ -189,6 +189,7 @@ class FitEllipticalMoffat2D:
         par[4]: gamma2 (width parameter in 2nd arbitrary(?) direction)
         par[5]: phi (rotation angle in radians)
         par[6]: alpha (shape parameter)
+        par[7]: background
     """
     def __init__(self, c):
         """

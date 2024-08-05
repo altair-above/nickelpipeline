@@ -46,15 +46,15 @@ def display_nickel(image: Union[str, Path, Fits_Simple]):
     data_masked = image.masked_array
     data_masked = np.ma.masked_array(np.delete(data_masked.data, bad_columns, axis=1),
                                      np.delete(data_masked.mask, bad_columns, axis=1))
-    plt.figure(figsize=(8, 6))
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 
     interval = ZScaleInterval()
     vmin, vmax = interval.get_limits(data_masked)
     cmap = plt.get_cmap()
     cmap.set_bad('r', alpha=0.5)
-    plt.imshow(data_masked, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
+    ax.imshow(data_masked, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
     plt.colorbar()
-    plt.gcf().set_dpi(300)
     plt.show()
    
 def display_many_nickel(path_list):
@@ -66,4 +66,4 @@ def display_many_nickel(path_list):
     """
     images = unzip_directories(path_list, output_format='Fits_Simple')
     for image in images:
-        display_nickel(image)
+        display_nickel(image, display=True)

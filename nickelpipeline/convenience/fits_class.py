@@ -1,17 +1,17 @@
-import numpy as np
 import numpy.ma as ma
 import re
 import matplotlib.pyplot as plt
-from matplotlib.path import Path as matPath
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
 from pathlib import Path
 from typing import Union
+import logging
 
-from nickelpipeline.convenience.nickel_data import (ccd_shape, fov_shape, bad_columns, 
-                                                    bad_triangles, bad_rectangles)
-
+from nickelpipeline.convenience.nickel_data import (ccd_shape, fov_shape)
+from nickelpipeline.convenience.nickel_masks import get_masks_from_file
         
+logger = logging.getLogger(__name__)
+
 class Fits_Simple:
     """
     A simple class to handle FITS files.
@@ -54,31 +54,71 @@ class Fits_Simple:
         else:
             image_path = Path(image_path)
             self.path = image_path
-            self.filename = image_path.stem
+            self.filename = image_path.name
+            self._mask = None
+    
+    @property
+    def header(self):
+        with fits.open(self.path) as hdul:
+            return hdul[0].header
+    
+    @property
+    def data(self):
+        with fits.open(self.path) as hdul:
+            return hdul[0].data
         
-            with fits.open(image_path) as hdul:
-                self.header = hdul[0].header
-                self.data = hdul[0].data
+    @property
+    def mask(self):
+        if self._mask is None:
+            with fits.open(self.path) as hdul:
                 try:
-                    self.mask = hdul['MASK'].data
+                    return hdul['MASK'].data
                 except KeyError:
+                    logger.debug(f'No mask in FITS file {self.path.name}; returning default mask')
                     if all(self.data.shape == ccd_shape):
-                        self.mask = nickel_mask
+                        return get_masks_from_file('mask')
                     elif all(self.data.shape == fov_shape):
-                        self.mask = nickel_fov_mask
-            self.masked_array = ma.masked_array(self.data, self.mask)
-            
-            try:
-                self.image_num = extract_number(self.filename)
-                self.object = self.header["OBJECT"]
-                self.filtnam = self.header["FILTNAM"]
-                self.exptime = self.header["EXPTIME"]
-            except:
-                # For FITS images with limited header information
-                self.image_num = None
-                self.object = None
-                self.filtnam = None
-                self.exptime = None
+                        return get_masks_from_file('fov_mask')
+        else:
+            return self._mask
+    @mask.setter
+    def mask(self, new_mask):
+        if new_mask.shape != self.mask.shape:
+            raise ValueError(f"new_mask must have same shape as old mask {self.mask.shape}. new_mask.shape = {new_mask.shape}")
+        self._mask = new_mask
+    
+    @property
+    def masked_array(self):
+        return ma.masked_array(self.data, self.mask)
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def image_num(self):
+        # Use regular expression to find all digits in the string
+        numbers = re.findall(r'\d+', self.filename)
+        return int(''.join(numbers))
+    
+    @property
+    def object(self):
+        try:
+            return self.header["OBJECT"]
+        except KeyError:
+            return None
+    @property
+    def filtnam(self):
+        try:
+            return self.header["FILTNAM"]
+        except KeyError:
+            return None
+    @property
+    def exptime(self):
+        try:
+            return self.header["EXPTIME"]
+        except KeyError:
+            return None
     
     def __str__(self) -> str:
         """
@@ -115,62 +155,5 @@ class Fits_Simple:
             plt.show()
 
 
-def extract_number(input_string):
-    # Use regular expression to find all digits in the string
-    numbers = re.findall(r'\d+', input_string)
-    return int(''.join(numbers))
 
-
-def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_mask: list) -> ma.MaskedArray:
-    """
-    Masks the triangles from the image by setting the pixel values within those triangles to zero.
-
-    Args:
-        data (ndarray): 2D numpy array representing the image to mask.
-        cols_to_mask (list): List of column indices to mask.
-        tris_to_mask (list): List of tuples of 3 coordinates representing triangles to mask.
-        rects_to_mask (list): List of tuples of 4 coordinates representing rectangles to mask.
-
-    Returns:
-        ndarray: The image with triangles masked.
-    """
-    rows, cols = data.shape
-    mask = np.zeros((rows, cols), dtype=bool)
-    
-    # Mask the rectangles
-    for rectangle in rects_to_mask:
-        mask[rectangle[0][0]:rectangle[1][0],
-             rectangle[0][1]:rectangle[1][1]] = True
-    # Transpose mask so that correct areas are masked (FITS indexing is odd)
-    mask = mask.T
-
-    for triangle in tris_to_mask:
-        # Create a path object for the triangle
-        path = matPath(triangle)
-        
-        # Determine which points are inside the triangle
-        y, x = np.mgrid[:rows, :cols]
-        points = np.vstack((x.flatten(), y.flatten())).T
-        mask = np.logical_or(mask, path.contains_points(points).reshape(rows, cols))
-
-    # Mask the specified columns
-    for col in cols_to_mask:
-        mask[:, col] = True
-    
-    # Create the masked array
-    masked_data = ma.masked_array(data, mask)
-    return masked_data
-
-
-# Mask for Nickel images (masking bad columns and blind corners)
-nickel_mask_cols_only = add_mask(np.zeros(ccd_shape), bad_columns, [], []).mask
-nickel_mask = add_mask(np.zeros(ccd_shape), bad_columns, bad_triangles,
-                       bad_rectangles).mask
-
-# Calculate the padding needed
-pad_height = fov_shape[0] - ccd_shape[0]
-pad_width = fov_shape[1] - ccd_shape[1]
-# Apply padding
-nickel_fov_mask_cols_only = np.pad(nickel_mask_cols_only, ((0, pad_height), (0, pad_width)), mode='constant', constant_values=0)
-nickel_fov_mask = np.pad(nickel_mask, ((0, pad_height), (0, pad_width)), mode='constant', constant_values=0)
 

@@ -121,7 +121,7 @@ class ScriptBase:
         Provide the name of the script.  By default, this is the name of the
         module with ``nickelpipeline_`` prepended.
         """
-        return f"nickelpipeline_{cls.__module__.split('.')[-1]}"
+        return f"nickelpipeline_{cls.__module__.split('.')[-1].split('_')[0]}"
 
     @classmethod
     def parse_args(cls, options=None):

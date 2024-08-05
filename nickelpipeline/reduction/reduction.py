@@ -16,19 +16,19 @@ import ccdproc
 from nickelpipeline.convenience.nickel_data import (gain, read_noise, bias_label, 
                                                     dome_flat_label, sky_flat_label,
                                                     dark_label, focus_label)
-from nickelpipeline.convenience.fits_class import nickel_fov_mask_cols_only
+from nickelpipeline.convenience.nickel_masks import get_masks_from_file
 
 logger = logging.getLogger(__name__)
 
 
-def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_table.yml',
+def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_table.tbl',
                save_inters=False, excl_files=[], excl_obj_strs=[], excl_filts=[]):
     """
     Perform reduction of raw astronomical data frames (overscan subtraction,
     bias subtraction, flat division, cosmic ray masking)
 
     Args:
-        rawdir (Path): Directory containing raw FITS files if no table_path_in.
+        rawdir (str or Path): Directory containing raw FITS files if no table_path_in.
         table_path_in (str): Path to input table file with raw FITS file information.
         table_path_out (str): Path to output table file for storing the raw FITS file information.
         save_inters (bool): If True, save intermediate results during processing.
@@ -39,6 +39,8 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
     Returns:
         list: Paths to the saved reduced images.
     """
+    if rawdir is not None:
+        rawdir = Path(rawdir)
     # Organize raw files based on input directory or table
     file_df = organize_files(rawdir, table_path_in, table_path_out, excl_files, excl_obj_strs, excl_filts)
     
@@ -61,10 +63,10 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
 
     # Filter out non-science files
     scifiles_mask = ((file_df.objects != bias_label) &
-                    (file_df.objects != dark_label) &
-                    (file_df.objects != dome_flat_label) &
-                    (file_df.objects != sky_flat_label) &
-                    (file_df.objects != focus_label)).values
+                     (file_df.objects != dark_label) &
+                     (file_df.objects != dome_flat_label) &
+                     (file_df.objects != sky_flat_label) &
+                     (file_df.objects != focus_label)).values
     scifile_df = file_df.copy()[scifiles_mask]
 
     # Perform overscan subtraction & trimming
@@ -90,7 +92,7 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
         for scienceobject in scienceobjects:
             # Filter science files by object and filter
             sub_scifile_df = scifile_df.copy()[(scifile_df.objects == scienceobject) &
-                                        (scifile_df.filters == filt)]
+                                               (scifile_df.filters == filt)]
             # Create directory for each science target / filter combination
             sci_dir = reddir / (scienceobject + '_' + filt)
             
@@ -135,7 +137,6 @@ def organize_files(rawdir, table_path_in, table_path_out,
         file_df.paths = [Path(file_path) for file_path in file_df.paths]
         logger.info(f"{len(file_df.paths)} raw files extracted from table file")
     else:
-        rawdir = Path(rawdir)
         # Extract raw files from the specified directory
         logger.info(f"---- reduce_all() called on directory {rawdir}")
         rawfiles = [file for file in rawdir.iterdir() if (file.is_file())]
@@ -253,7 +254,8 @@ def init_ccddata(frame):
         CCDData: Initialized and processed CCDData object.
     """
     ccd = CCDData.read(frame, unit=u.adu)
-    ccd.mask = nickel_fov_mask_cols_only
+    ccd.mask = get_masks_from_file('fov_mask')
+    ccd.mask[ccd.data > 62000] = True
     ccd = ccdproc.cosmicray_lacosmic(ccd, gain_apply=False, gain=gain, 
                                      readnoise=read_noise, verbose=False)
     # Apply gain manually due to a bug in cosmicray_lacosmic function
@@ -324,7 +326,7 @@ def get_master_bias(file_df, save=True, save_dir=None):
     """
     logger.info("Combining bias files into master bias")
     bias_df = file_df.copy()[file_df.objects == bias_label]
-    logger.info(f"Using {len(bias_df.files)} bias frames: {[file.name.split('_')[0] for file in bias_df.paths]}")
+    logger.info(f"Using {len(bias_df.files)} bias frames: {[file.stem.split('_')[0] for file in bias_df.paths]}")
 
     master_bias = stack_frames(bias_df.files, frame_type='bias')
     
@@ -362,7 +364,7 @@ def get_master_flats(file_df, save=True, save_dir=None):
     # Make a master flat for all filts in which flats have been taken
     for filt in set(file_df.filters[file_df.objects == flattype]):
         flat_df = file_df.copy()[(file_df.objects == flattype) & (file_df.filters == filt)]
-        logger.info(f"Using {len(flat_df.files)} flat frames: {[path.name.split('_')[0] for path in flat_df.paths]}")
+        logger.info(f"Using {len(flat_df.files)} flat frames: {[path.stem.split('_')[0] for path in flat_df.paths]}")
 
         master_flat = stack_frames(flat_df.files, frame_type='flat')
         
@@ -387,8 +389,8 @@ def save_results(scifile_df, modifier_str, save_dir):
         list: List of paths to the saved files.
     """
     Path.mkdir(save_dir, exist_ok=True)
-    logger.info(f"Saving {len(scifile_df.files)} fully reduced {save_dir.name} images to {save_dir}")
-    save_paths = [save_dir / (path.name.split('_')[0] + f"_{modifier_str}" + path.suffix) for path in scifile_df.paths]
+    logger.info(f"Saving {len(scifile_df.files)} _{modifier_str} images {save_dir.name} images to {save_dir}")
+    save_paths = [save_dir / (path.stem.split('_')[0] + f"_{modifier_str}" + path.suffix) for path in scifile_df.paths]
     for file, path in zip(scifile_df.files, save_paths):
         file.write(path, overwrite=True)
     return save_paths

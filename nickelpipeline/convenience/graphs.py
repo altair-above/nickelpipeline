@@ -1,9 +1,11 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
+import logging
 from loess.loess_2d import loess_2d
 from nickelpipeline.convenience.nickel_data import ccd_shape
 
+logger = logging.getLogger(__name__)
 
 def smooth_contour(data_x, data_y, data_vals, color_range, backgrd_ax=None, 
                    frac=0.3, title=None, category_str=None):
@@ -26,8 +28,8 @@ def smooth_contour(data_x, data_y, data_vals, color_range, backgrd_ax=None,
         param_list, _ = loess_2d(data_x, data_y, data_vals, xnew=grid_x.flatten(),
                                  ynew=grid_y.flatten(), frac=frac)
     except np.linalg.LinAlgError:
-        print("LinAlgError: SVD did not converge in Linear Least Squares")
-        print("Skipping this contour plot")
+        logger.warning("LinAlgError: SVD did not converge in Linear Least Squares")
+        logger.warning("Skipping this contour plot")
         return ax, None
     param_list = param_list.reshape(grid_x.shape)
     

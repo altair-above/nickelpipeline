@@ -20,7 +20,7 @@ def avg_plate_scale(path_list, verbose=True, fast=False):
     
     output_dir = str(images[0].parent.parent.parent / 'astrometric')
     
-    astro_calib_images = run_astrometry(images, output_dir, fast=fast, verbose=verbose)
+    astro_calib_images = run_astrometry(images, output_dir, resolve=fast)
     if verbose:
         print(astro_calib_images)
     

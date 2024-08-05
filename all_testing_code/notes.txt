@@ -169,9 +169,9 @@ NEXT BIG STEP
 
 - Make sure astrometry.net is still working 😭
 
-1. Logging (python logging package)
+|1. Logging (python logging package)
     - Include #s of images, etc.
-2. Use ccdproc functions instead of Steven's pipeline
+|2. Use ccdproc functions instead of Steven's pipeline
 3. Scriptify (reduction pipeline takes in just 1 arg (raw) and runs in main)
     - Use scriptbase
     - Rerun pip install every time adding script to setup.cfg
@@ -187,7 +187,7 @@ NEXT BIG STEP
 
 |- Issues with reduction
     |- Bottom left corner, slightly bright spot (flat issue)
-    - Cosmic rays / airplanes / satellites
+    |- Cosmic rays / airplanes / satellites
         - is it proportional to exptime?
         - Stacking to eliminate?
             - correct seeing to max
@@ -208,24 +208,27 @@ NEXT BIG STEP
     - reverse engineering to get back to image name might require looking at the format of the rest of the images
     - str(3).zfill(4) = '0003'
 
-- process files into a table, and then reduce from the table
-    - people can comment out bad files
+|- process files into a table, and then reduce from the table
+    |- people can comment out bad files
+
+|- bug in ccdproc -- when gain_apply = True, the units are wrong (electron/adu vs electrons)
+    |- bc cleanarr being passed to the gain_apply function with no units
+    |- search ccdproc for gain_apply error
+    |- send in comment to issue "pr incoming"
+    |- send in pr with form filled out
+
+|astropy table writing (use ascii.fixed_width format)
+
+- presentation pipeline -> camera analysis
+- real time presentation of pipeline?
+
+|- logger in __init__.py
+- add exptime to table, airmass
 
 
-Confirmation--can I multiply all images by gain, perform regular reduction,
-and have everything come out correct?
-ccd.unit = electrons, but ccd.data.unit = electrons/ADU
+|- star breakdown script
+    |- add options within this for creating stamps
+    |- display source circles on top of image
+|- astrometric solution
 
-bug in ccdproc -- when gain_apply = True, the units are wrong (electron/adu vs electrons)
-bc cleanarr being passed to the gain_apply function with no units
-
-search ccdproc for gain_apply error
-
-
-astropy table writing (use ascii.fixed_width format)
-
-presentation pipeline -> camera analysis
-real time presentation of pipeline?
-
-logger in __init__.py
-add exptime to table, airmass
+FIX CCD SHAPE AND FOV SHAPE USING HEADER

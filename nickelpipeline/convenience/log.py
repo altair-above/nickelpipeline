@@ -19,24 +19,29 @@ def load_logging_config():
         config = json.load(f)
     return config
 
-def change_log_file(logger, log_path):
-    # Change the filename of the file handler
-    for handler in logger.handlers:
-        if isinstance(handler, logging.FileHandler):
-            handler.baseFilename = log_path
-            # Close the old stream and open a new one
-            handler.close()
-            handler.stream = open(handler.baseFilename, handler.mode, encoding=handler.encoding)
+# def change_log_file(logger, log_path):
+#     # Change the filename of the file handler
+#     for handler in logger.handlers:
+#         if isinstance(handler, logging.FileHandler):
+#             handler.baseFilename = log_path
+#             # Close the old stream and open a new one
+#             handler.close()
+#             handler.stream = open(handler.baseFilename, handler.mode, encoding=handler.encoding)
 
-def adjust_global_logger(log_level='INFO', output_file='default_log.log'):
+def adjust_global_logger(log_level='INFO', name='all_others'):
 
-    # Load the JSON configuration from a file
+    # Load the JSON configuration from a file and adjust
+    output_file = f"log_{name.split('.')[-1]}.log"
     with pkg_resources.resource_stream('nickelpipeline.convenience', 'logging_config.json') as f:
         config = json.load(f)
         config['handlers']['file']['filename'] = output_file
         config['handlers']['console']['level'] = log_level
-        # config['root']['level'] = log_level
 
     # Configure logging with the loaded configuration
     logging.config.dictConfig(config)
 
+def log_astropy_table(table):
+    print_table = ""
+    for line in table.pformat_all():
+        print_table += f"{line}\n"
+    return print_table

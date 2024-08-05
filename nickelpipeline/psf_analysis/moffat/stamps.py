@@ -7,6 +7,7 @@ import numpy as np
 from pathlib import Path
 from matplotlib import pyplot, ticker
 from matplotlib.backends.backend_pdf import PdfPages
+import logging
 
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
@@ -14,6 +15,9 @@ from photutils.detection import DAOStarFinder
 from skimage import transform
 
 from nickelpipeline.convenience.fits_class import Fits_Simple
+
+logger = logging.getLogger(__name__)
+
 
 def show_stamps(stamps, pdf_file, vmin=None, vmax=None):
     """
@@ -58,14 +62,14 @@ def show_stamps(stamps, pdf_file, vmin=None, vmax=None):
             fig.clear()
             pyplot.close()
 
-def generate_stamps_bulk(images, category_str, verbose=False):
+def generate_stamps(images, output_base, thresh=15.):
     """
     Generate and analyze stamps from the given images.
 
     Args:
         images (list): List of image file paths.
-        category_str (str): Category string for output directories and files.
-        verbose (bool, optional): Verbose output.
+        output_base (Path): Base of path to files for storing stamp data
+        thresh (float): Star detection threshold (threshold = thresh*std)
     """
     num_images = len(images)
     
@@ -73,14 +77,8 @@ def generate_stamps_bulk(images, category_str, verbose=False):
     images = [Fits_Simple(image) for image in images]
     masked_images = np.ma.array([image.masked_array for image in images])
     
-    # Create output directories
-    proc_dir = Path('.').resolve() / "proc_files"
-    Path.mkdir(proc_dir, exist_ok=True)
-    base_parent = proc_dir / category_str
-    Path.mkdir(base_parent, exist_ok=True)
-    base = proc_dir / category_str / category_str
-    ofits = base.with_suffix('.rdx.fits')
-    src_ofile = base.with_suffix('.src.db')
+    ofits = output_base.with_suffix('.rdx.fits')
+    src_ofile = output_base.with_suffix('.src.db')
 
     # Setting up stamp & source detection parameters
     default_fwhm = 7.0
@@ -100,8 +98,10 @@ def generate_stamps_bulk(images, category_str, verbose=False):
     for index in range(num_images):
         # Source detection
         mean, median, std = sigma_clipped_stats(masked_images[index], sigma=3.)
-        starfind = DAOStarFinder(fwhm=default_fwhm, threshold=15.*std, peakmax=55000)
+        starfind = DAOStarFinder(fwhm=default_fwhm, threshold=thresh*std)
         sources = starfind(masked_images[index].filled(0.0) - median, mask=np.ma.getmaskarray(masked_images[index]))
+        if sources is None:
+            continue
         nsources = len(sources)
         ap_centers = np.column_stack((sources['xcentroid'], sources['ycentroid']))  # Source positions
 
@@ -173,11 +173,10 @@ def generate_stamps_bulk(images, category_str, verbose=False):
                                                     np.ones(nkeep, dtype=float))),
                                 axis=0)
         
-        if verbose: 
-            print(f'Working on image {images[index]} ({len(stamps[keep])} stamps)')
+        logger.info(f'Working on image {images[index]} ({len(stamps[keep])} stamps)')
 
         # Plot and save the stamps to a PDF file
-        pdf_file = base.with_suffix(f'.{images[index].path.stem}.stamps.pdf')
+        pdf_file = output_base.with_suffix(f".{images[index].path.stem.split('_')[0]}.stamps.pdf")
         show_stamps(all_stamps[index], pdf_file)
 
     # Save the source data to a text file
@@ -202,6 +201,8 @@ def generate_stamps_bulk(images, category_str, verbose=False):
                   fits.ImageHDU(data=np.ma.getmaskarray(masked_images).astype(np.uint8),
                                 name='MASKS')]
                   + stamp_hdus).writeto(str(ofits), overwrite=True)
+    
+    return source_data
 
 def main():
 
