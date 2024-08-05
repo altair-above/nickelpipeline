@@ -56,6 +56,16 @@ photometric_calib_all(astrophot_dir)
 # print(f"{image100}: {image100.airmass}")
 
 
+# from nickelpipeline.convenience.fits_class import Fits_Simple
+# from pathlib import Path
+
+# astro_dir = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/astrometric/astroimg')
+
+# image40 = astro_dir / 'd1040_astro.fits'
+# image40 = Fits_Simple(image40)
+# image40.display()
+
+
 
 # z = 24.9286 and k = -0.180152
 # z = 27.0702 and k = -0.154549
