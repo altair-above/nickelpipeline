@@ -31,7 +31,7 @@ class AstrometryPipeline(scriptbase.ScriptBase):
     def main(args):
         
         from pathlib import Path
-        from nickelpipeline.astrometry.astrometry_api import run_astrometry
+        from nickelpipeline.astrometry.astrometry_api import astrometry_all
         from nickelpipeline.convenience.dir_nav import unzip_directories
         
         if args.very_verbose:
@@ -40,18 +40,18 @@ class AstrometryPipeline(scriptbase.ScriptBase):
         adjust_global_logger(log_levels[args.verbosity], __name__)
         logger = logging.getLogger(__name__)
               
-        logger.debug(f"Extracting images from {args.reddir}")
-        dirs = [dir for dir in Path(args.reddir).iterdir() if dir.is_dir()]
-        if len(dirs) > 0:
-            red_files = unzip_directories(dirs, output_format='Path')
-        else:
-            red_files = unzip_directories([args.reddir], output_format='Path')
-        if args.output_dir is None:
-            output_dir = str(red_files[0].parent.parent.parent / 'astrometric')
+        # logger.debug(f"Extracting images from {args.reddir}")
+        # dirs = [dir for dir in Path(args.reddir).iterdir() if dir.is_dir()]
+        # if len(dirs) > 0:
+        #     red_files = unzip_directories(dirs, output_format='Path')
+        # else:
+        #     red_files = unzip_directories([args.reddir], output_format='Path')
+        # red_files = unzip_directories([args.reddir], output_format='Path')
+        # if args.output_dir is None:
+        #     output_dir = str(red_files[0].parent.parent.parent / 'astrometric')
         
-        logger.debug(f"Calling run_astrometry()")
-        calib_files = run_astrometry(red_files, output_dir, 
-                                     mode=args.output_type, )
+        calib_files = astrometry_all(args.reddir, args.output_dir, 
+                                     mode=args.output_type)
         
         return calib_files
         

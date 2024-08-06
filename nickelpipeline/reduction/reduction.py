@@ -197,12 +197,12 @@ def organize_files(rawdir, table_path_in, table_path_out,
     all_excluded_file_names += excluded_file_names
     logger.info(f"Automatically excluding files with 'Focus' in object name: {excluded_file_names}")
     
-    # If table file already exists, preserve the original table file, but show which files the table says to exclude
-    if table_path_in is not None:
+    # If table_path_out isn't provided, preserve the original table file, but show which files the table says to exclude
+    if table_path_out is not None:
         already_excl_lines = comment_out_rows(all_excluded_file_names, table_path_out, modify=False)
         logger.info(f"Automatically excluding files already commented out in the table file: {already_excl_lines}")
-        logger.debug(f"Since table_path_in has been provided, the table file is not modified to comment out manual exclusions {all_excluded_file_names}")
-    # If table file didn't already exist, add '#' to excluded files' rows in table file to ignore them in future
+        logger.debug(f"Since table_path_out has not been provided, the table file is not modified to comment out manual exclusions {all_excluded_file_names}")
+    # If is provided, add '#' to excluded files' rows in table file to ignore them in future
     else:
         already_excl_lines = comment_out_rows(all_excluded_file_names, table_path_out, modify=True)
         logger.info(f"Modifying {table_path_out} to ignore manually excluded files in future")
