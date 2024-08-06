@@ -13,6 +13,8 @@ class AstrometryPipeline(scriptbase.ScriptBase):
         parser = super().get_parser(description='Performs astrometric calibration on reduced images', width=width)
         parser.add_argument('reddir', type=str,
                             help='Path to directory with reduced files to astrometrically calibrate.')
+        parser.add_argument('apikey', type=str,
+                            help='API key from https://nova.astrometry.net account')
         parser.add_argument('-out', '--output_dir', default=None, type=str,
                             help='Path to directory to save calibrated images. Defaults to /astrometric/ in same directory as reddir')
         parser.add_argument('-t', '--output_type', default='image', type=str,
@@ -30,28 +32,16 @@ class AstrometryPipeline(scriptbase.ScriptBase):
     @staticmethod
     def main(args):
         
-        from pathlib import Path
-        from nickelpipeline.astrometry.astrometry_api import astrometry_all
-        from nickelpipeline.convenience.dir_nav import unzip_directories
+        from nickelpipeline.astrometry.astrometry import astrometry_all
         
         if args.very_verbose:
             args.verbosity = 5
         log_levels = {1:'CRITICAL', 2:'ERROR', 3:'WARNING', 4:'INFO', 5:'DEBUG'}
         adjust_global_logger(log_levels[args.verbosity], __name__)
         logger = logging.getLogger(__name__)
-              
-        # logger.debug(f"Extracting images from {args.reddir}")
-        # dirs = [dir for dir in Path(args.reddir).iterdir() if dir.is_dir()]
-        # if len(dirs) > 0:
-        #     red_files = unzip_directories(dirs, output_format='Path')
-        # else:
-        #     red_files = unzip_directories([args.reddir], output_format='Path')
-        # red_files = unzip_directories([args.reddir], output_format='Path')
-        # if args.output_dir is None:
-        #     output_dir = str(red_files[0].parent.parent.parent / 'astrometric')
         
-        calib_files = astrometry_all(args.reddir, args.output_dir, 
-                                     mode=args.output_type)
+        calib_files = astrometry_all(args.reddir, args.apikey, args.output_dir, 
+                                     mode=args.output_type, resolve=args.resolve)
         
         return calib_files
         

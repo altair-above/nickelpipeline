@@ -3,7 +3,7 @@ import numpy as np
 import re
 from matplotlib import pyplot as plt
 
-from nickelpipeline.astrometry.astrometry_api import run_astrometry, get_astrometric_solves
+from nickelpipeline.astrometry.astrometry import run_astrometry, get_astrometric_solves
 from nickelpipeline.convenience.fits_class import Fits_Simple
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 

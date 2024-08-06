@@ -86,24 +86,7 @@ class PhotometryPipeline(scriptbase.ScriptBase):
                 
                 all_data = aperture_analysis(psf_data, file)
                 source_catalogs.append(all_data)
-                all_data.write(output_file, format='csv', overwrite=True)  
-                
-        # for file in red_files:
-        #     psf_data = psf_analysis(file, thresh=args.thresh, 
-        #                             mode=args.mode, fittype=args.fittype, 
-        #                             plot_final=args.plot_final, 
-        #                             plot_inters=args.plot_inters,)
-        #     if args.group:
-        #         psf_data = consolidate_groups(psf_data)
-        #     all_data = aperture_analysis(psf_data, file)
-            
-        #     source_catalogs.append(all_data)
-        #     filestem = file.stem.split('_')[0]
-        #     if args.group:
-        #         output_file = consol_dir / f'{filestem}_photsrcs_consolidated.csv'
-        #     else:
-        #         output_file = unconsol_dir / f'{filestem}_photsrcs.csv'
-        #     all_data.write(output_file, format='csv', overwrite=True)  
+                all_data.write(output_file, format='csv', overwrite=True)
         
         return source_catalogs
         

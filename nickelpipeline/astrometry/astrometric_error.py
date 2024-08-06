@@ -3,7 +3,7 @@ from astropy.io import fits
 from matplotlib import pyplot as plt
 from matplotlib import cm
 
-from nickelpipeline.astrometry.astrometry_api import run_astrometry, get_astrometric_solves
+from nickelpipeline.astrometry.astrometry import run_astrometry, get_astrometric_solves
 from nickelpipeline.convenience.nickel_data import plate_scale_approx
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 from nickelpipeline.convenience.graphs import smooth_contour, scatter_sources
