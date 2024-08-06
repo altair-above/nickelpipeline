@@ -316,7 +316,10 @@ def psf_plot(plot_file, fit, fittype='ellip', show=False, plot_fit=True):
         pdf.savefig()  # Save the figure to the PDF
         if show:
             pyplot.show()  # Display the plot
-            fig.clear()
+            try:
+                fig.clear()
+            except:
+                pass
         pyplot.close()
 
 

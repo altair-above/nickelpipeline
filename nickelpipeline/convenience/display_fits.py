@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from pathlib import Path
 from typing import Union
 from astropy.io import fits
@@ -47,6 +48,7 @@ def display_nickel(image: Union[str, Path, Fits_Simple]):
     data_masked = np.ma.masked_array(np.delete(data_masked.data, bad_columns, axis=1),
                                      np.delete(data_masked.mask, bad_columns, axis=1))
     fig = plt.figure(figsize=(8, 6))
+    plt.title(image)
     ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 
     interval = ZScaleInterval()
@@ -54,7 +56,7 @@ def display_nickel(image: Union[str, Path, Fits_Simple]):
     cmap = plt.get_cmap()
     cmap.set_bad('r', alpha=0.5)
     ax.imshow(data_masked, origin='lower', cmap=cmap, vmin=vmin, vmax=vmax)
-    plt.colorbar()
+    plt.colorbar(cm.ScalarMappable(cmap=cmap), ax=ax)
     plt.show()
    
 def display_many_nickel(path_list):
@@ -66,4 +68,4 @@ def display_many_nickel(path_list):
     """
     images = unzip_directories(path_list, output_format='Fits_Simple')
     for image in images:
-        display_nickel(image, display=True)
+        display_nickel(image)

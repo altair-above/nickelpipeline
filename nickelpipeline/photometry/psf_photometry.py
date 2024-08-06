@@ -44,8 +44,10 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     new_mask[:, :5] = True
     new_mask[:, -5:] = True
     image.mask = new_mask
+    new_data = image.data.copy()
+    new_data[:,bad_columns] = 0
+    image.data = new_data
     img = image.masked_array
-    img.data[:,bad_columns] = 0
     
     #----------------------------------------------------------------------
     # Use a Moffat fit to find & fit initial sources
@@ -80,12 +82,19 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     # clip_avg_par = np.mean(brightest, axis=0)
     # clip_avg_fwhm = process_par(clip_avg_par, 'Clipped Avg', fittype=fittype)
     
-    psf_file = Path(f'{str(base)}.psf.fits').resolve()  # PSF info stored here
-    stack_par = fit_psf_stack(base, 1, fittype=fittype, ofile=psf_file).par
-    stack_fwhm = process_par(stack_par, 'Stack', fittype=fittype)
-
-    fit_par = stack_par
-    fit_fwhm = stack_fwhm
+    try:
+        psf_file = Path(f'{str(base)}.psf.fits').resolve()  # PSF info stored here
+        stack_par = fit_psf_stack(base, 1, fittype=fittype, ofile=psf_file).par
+        stack_fwhm = process_par(stack_par, 'Stack', fittype=fittype)
+        fit_par = stack_par
+        fit_fwhm = stack_fwhm
+    except:
+        brightest = np.array(sorted(source_pars, key=lambda coord: coord[2])[:min(7, len(source_pars))])
+        clip_avg_par = np.mean(brightest, axis=0)
+        clip_avg_fwhm = process_par(clip_avg_par, 'Clipped Avg', fittype=fittype)
+        fit_par = clip_avg_par
+        fit_fwhm = clip_avg_fwhm
+        
     
     init_phot_data = Table()
     init_phot_data.add_column(source_coords[:,0], name='x_fit')
@@ -97,8 +106,6 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     
     if plot_inters:
         plot_sources(image, init_phot_data, fit_fwhm)
-    
-    img.data[:,bad_columns] = fit_par[5]
 
     #----------------------------------------------------------------------
     # Attempt to improve the source detection by improving the FWHM estimate
@@ -119,10 +126,16 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     local_bkg = LocalBackground(*local_bkg_range, mmm_bkg)
     fitter = LevMarLSQFitter()  # This is the optimization algorithm
     
+    # Set bad columns to the background value
+    bkgd = mmm_bkg.calc_background(img)
+    new_data = img.data.copy()
+    new_data[:,bad_columns] = bkgd
+    img = np.ma.masked_array(new_data, img.mask)
+    image.data = new_data
+    
     # This is the model of the PSF
     moffat_psf = Moffat2D(gamma=fit_par[3], alpha=fit_par[4])
     moffat_psf = make_psf_model(moffat_psf)
-    
     
     # This is the object that performs the photometry
     phot = IterativePSFPhotometry(finder=iraffind, grouper=grouper,
@@ -137,7 +150,7 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     phot_data.add_column(image.airmass * np.ones(len(phot_data)), name='airmass')
     
     logger.debug(f"Sources Found (Iter 2): \n{log_astropy_table(phot_data)}")
-        
+    
     if plot_inters:
         plot_groups(phot_data, source_coords, source_fits, base)
     if plot_final:
@@ -202,6 +215,7 @@ def plot_sources(image, phot_data, given_fwhm):
     cmap = plt.get_cmap()
     cmap.set_bad('r', alpha=0.5)
     plt.figure(figsize=(12,10))
+    plt.title(image)
     plt.imshow(image.masked_array, origin='lower', vmin=vmin, vmax=vmax,
                cmap=cmap, interpolation='nearest')
     plt.colorbar()

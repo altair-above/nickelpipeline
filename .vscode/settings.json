@@ -10,5 +10,6 @@
         "./all_testing_code/old_code",
         "*.fits"
         // "./bin_stats_analysis",
-    ]
+    ],
+    "terminal.integrated.scrollback": 50000
 }

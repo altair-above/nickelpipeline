@@ -15,6 +15,7 @@ import ccdproc
 
 from nickelpipeline.convenience.nickel_data import (gain, read_noise, bias_label, 
                                                     dome_flat_label, sky_flat_label,
+                                                    sky_flat_label_alt,
                                                     dark_label, focus_label)
 from nickelpipeline.convenience.nickel_masks import get_masks_from_file
 
@@ -66,6 +67,7 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
                      (file_df.objects != dark_label) &
                      (file_df.objects != dome_flat_label) &
                      (file_df.objects != sky_flat_label) &
+                     (file_df.objects != sky_flat_label_alt) &
                      (file_df.objects != focus_label)).values
     scifile_df = file_df.copy()[scifiles_mask]
 
@@ -354,9 +356,11 @@ def get_master_flats(file_df, save=True, save_dir=None):
     # Use sky flats if available, else use dome flats
     if sky_flat_label in list(set(file_df.objects)):
         flattype = sky_flat_label
+    elif sky_flat_label_alt in list(set(file_df.objects)):
+        flattype = sky_flat_label_alt
     else:
         flattype = dome_flat_label
-    logger.debug(f"Assuming that flat label names normalize to:  {sky_flat_label} (sky flat) and {dome_flat_label} (dome flat)")
+    logger.debug(f"Assuming that flat label names normalize to:  {sky_flat_label} or {sky_flat_label_alt} (sky flat) and {dome_flat_label} (dome flat)")
     logger.debug(f"Using flat type '{flattype}'")
     
     master_flats = {}
@@ -433,6 +437,7 @@ def create_exclusion_func(exclude_list):
 bias_label = norm_str(bias_label)
 dome_flat_label = norm_str(dome_flat_label)
 sky_flat_label = norm_str(sky_flat_label)
+sky_flat_label_alt = norm_str(sky_flat_label_alt)
 dark_label = norm_str(dark_label)
 focus_label = norm_str(focus_label)
 

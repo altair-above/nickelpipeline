@@ -51,6 +51,7 @@ class Fits_Simple:
             self.path = image_path
             self.filename = image_path.name
             self.filenamebase = image_path.name.split('_')[0]
+            self._data = None
             self._mask = None
     
     @property
@@ -62,8 +63,14 @@ class Fits_Simple:
     @property
     def data(self):
         """The data contained in the FITS file."""
-        with fits.open(self.path) as hdul:
-            return hdul[0].data
+        if self._data is None:
+            with fits.open(self.path) as hdul:
+                self._data = hdul[0].data
+        return self._data
+    @data.setter
+    def data(self, new_data):
+        """The data contained in the FITS file."""
+        self._data = new_data
         
     @property
     def mask(self):
@@ -74,16 +81,16 @@ class Fits_Simple:
                     return hdul['MASK'].data
                 except KeyError:
                     logger.debug(f'No mask in FITS file {self.path.name}; returning default mask')
-                    if all(self.data.shape == ccd_shape):
+                    if all(self.shape == ccd_shape):
                         return get_masks_from_file('mask')
-                    elif all(self.data.shape == fov_shape):
+                    elif all(self.shape == fov_shape):
                         return get_masks_from_file('fov_mask')
         else:
             return self._mask
     @mask.setter
     def mask(self, new_mask):
-        if new_mask.shape != self.mask.shape:
-            raise ValueError(f"new_mask must have same shape as old mask {self.mask.shape}. new_mask.shape = {new_mask.shape}")
+        if new_mask.shape != self.shape:
+            raise ValueError(f"new_mask must have same shape as data {self.data.shape}. new_mask.shape = {new_mask.shape}")
         self._mask = new_mask
     
     @property
@@ -92,7 +99,9 @@ class Fits_Simple:
 
     @property
     def shape(self):
-        return self.data.shape
+        header = self.header
+        shape = (int(header['NAXIS1']), int(header['NAXIS2']))
+        return shape
 
     @property
     def image_num(self):

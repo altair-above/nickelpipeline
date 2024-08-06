@@ -231,7 +231,10 @@ NEXT BIG STEP
     |- display source circles on top of image
 |- astrometric solution
 
+******************************************************
 FIX CCD SHAPE AND FOV SHAPE USING HEADER
+can use to constrain astrometry
+******************************************************
 
 from pathlib import Path
 root = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/astrometric/astroimg')
@@ -240,3 +243,29 @@ for file in root.iterdir():
     if 'corr' in file.name:
         file.rename(newfolder / file.name)
 
+from pathlib import Path
+from nickelpipeline.convenience.fits_class import Fits_Simple
+root = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/examples/test_data_example/raw')
+# for file in root.iterdir():
+#     img = Fits_Simple(file)
+#     if 'Focus' in img.object or '110_232' in img.object or 'Dome flat' in img.object:
+#         file.unlink()
+# for file in root.iterdir():
+#     img = Fits_Simple(file)
+#     if (img.filtnam != 'V' and img.object != 'bias'):
+#         file.unlink()
+#     elif 'Flat' in img.object:
+#         file.unlink()
+objects = set()
+for file in root.iterdir():
+    img = Fits_Simple(file)
+    if 'sky flat' in img.object or 'bias' in img.object:
+        continue
+    if img.object not in objects:
+        objects.add(img.object)
+    else:
+        file.unlink()
+
+plate scale & fwhm
+
+ask for ray trace spot diagram, from this should have expected fwhm?

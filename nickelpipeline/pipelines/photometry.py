@@ -11,7 +11,10 @@ def photometry_all(reddir, output_dir=None, thresh=8.0, group=False, mode='all',
                    fittype='circ', plot_final=False, plot_inters=False):
     
     logger.debug(f"Extracting images from {reddir}")
-    obj_dirs = list(Path(reddir).iterdir())
+    reddir = Path(reddir)
+    obj_dirs = [dir for dir in reddir.iterdir() if dir.is_dir()]
+    if len(obj_dirs) == 0:
+        obj_dirs = [reddir]
 
     if output_dir is None:
         output_dir = obj_dirs[0].parent.parent / 'photometric'

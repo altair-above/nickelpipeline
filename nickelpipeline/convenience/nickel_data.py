@@ -16,6 +16,7 @@ bad_rectangles = []
 bias_label = 'Bias'
 dome_flat_label = 'Dome flat'
 sky_flat_label = 'Flat'
+sky_flat_label_alt = 'Sky flat'
 dark_label = 'dark'
 focus_label = 'focus'
 
