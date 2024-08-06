@@ -13,7 +13,7 @@ from nickelpipeline.convenience.dir_nav import unzip_directories
 
 logger = logging.getLogger(__name__)
 
-def astrometry_all(reddir, output_dir=None, mode='image', resolve=False):
+def astrometry_all(reddir, api_key, output_dir=None, mode='image', resolve=False):
     """
     Runs astrometry.net calibration on all images input, and saves the calibrated
     fits files to output_dir. Uses astrometry.net's API.
@@ -32,10 +32,10 @@ def astrometry_all(reddir, output_dir=None, mode='image', resolve=False):
     if output_dir is None:
         output_dir = red_files[0].parent.parent.parent / 'astrometric'
         
-    return run_astrometry(red_files, output_dir, mode, resolve)
+    return run_astrometry(red_files, api_key, output_dir, mode, resolve)
     
     
-def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
+def run_astrometry(image_paths, api_key, output_dir, mode='image', resolve=False):
     """
     Runs astrometry.net calibration on all images input, and saves the calibrated
     fits files to output_dir. Uses astrometry.net's API.
@@ -90,7 +90,7 @@ def run_astrometry(image_paths, output_dir, mode='image', resolve=False):
     logger.info("Connecting to astrometry.net")
     R = requests.post(
         "http://nova.astrometry.net/api/login",
-        data={"request-json": json.dumps({"apikey": "fknqiifdlhjliedf"})},  # API key can be found in your account -- currently using Allison's
+        data={"request-json": json.dumps({"apikey": str(api_key)})},  # API key can be found in your account -- currently using Allison's
     )
     dictionary = json.loads(R.text)
     session_key = dictionary["session"]

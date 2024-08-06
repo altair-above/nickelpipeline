@@ -3,7 +3,6 @@ from astropy.io import fits
 from matplotlib import pyplot as plt
 from matplotlib import cm
 
-from nickelpipeline.astrometry.plate_scale import avg_plate_scale
 from nickelpipeline.astrometry.astrometry_api import run_astrometry, get_astrometric_solves
 from nickelpipeline.convenience.nickel_data import plate_scale_approx
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
@@ -11,19 +10,19 @@ from nickelpipeline.convenience.graphs import smooth_contour, scatter_sources
 
 
 def graph_topographic(path_list, condition_tuples, error_type='error', 
-                      frac=0.3, fast=False, verbose=False,
+                      frac=0.3, fast=True, api_key=None, verbose=False,
                       include_smooth=True, include_srcs=False):
     
     images = unzip_directories(path_list, output_format='Fits_Simple')
     categories = categories_from_conditions(condition_tuples, images)
     
     for category, file_list in categories.items():
-        single_graph_topographic(file_list, str(category), error_type, frac, 
-                                 fast, verbose, include_smooth, include_srcs)
+        single_graph_topographic(file_list, str(category), error_type, frac, fast,
+                                 api_key, verbose, include_smooth, include_srcs)
 
 
 def graph_topographic_individuals(path_list, condition_tuples, error_type='error', 
-                                  frac=0.3, fast=False, verbose=False,
+                                  frac=0.3, fast=True, api_key=None, verbose=False,
                                   include_smooth=True, include_srcs=False):
     
     images = unzip_directories(path_list, output_format='Fits_Simple')
@@ -33,13 +32,13 @@ def graph_topographic_individuals(path_list, condition_tuples, error_type='error
         print(f"Category: {category}")
         for image in file_list:
             print(f"Image {image.name}:")
-            single_graph_topographic([image], str(category), error_type, frac, 
-                                     fast, verbose, include_smooth, include_srcs)
+            single_graph_topographic([image], str(category), error_type, frac, fast,
+                                     api_key, verbose, include_smooth, include_srcs)
         print("------------------")
 
 
 def single_graph_topographic(path_list, category_str="", error_type='error', 
-                             frac=0.3, fast=False, verbose=False, 
+                             frac=0.3, fast=True, api_key=None, verbose=False, 
                              include_smooth=True, include_srcs=False):
     
     images = unzip_directories(path_list, output_format='Path')
@@ -47,7 +46,9 @@ def single_graph_topographic(path_list, category_str="", error_type='error',
     if fast:
         astro_calib_images = get_astrometric_solves(images, output_dir, mode='corr')
     else:
-        astro_calib_images = run_astrometry(images, output_dir, mode='corr')
+        if api_key is None:
+            raise ValueError("api_key must be provided if parameter fast=False")
+        astro_calib_images = run_astrometry(images, api_key, output_dir, mode='corr')
     
     if len(astro_calib_images) == 0:
         print(f"Astrometry.net failed to calibrate image(s). Cannot graph.")
@@ -60,10 +61,7 @@ def single_graph_topographic(path_list, category_str="", error_type='error',
     y_list = np.concatenate(y_list)
     errors_list = np.concatenate(errors_list)
     
-    if fast:
-        errors_list = errors_list * plate_scale_approx
-    else:
-        errors_list = errors_list * avg_plate_scale(path_list, verbose=False, fast=True)
+    errors_list = errors_list * plate_scale_approx
     
     if error_type == 'error':
         color_range = [0.0, 0.3]
@@ -94,8 +92,7 @@ def single_graph_topographic(path_list, category_str="", error_type='error',
     except (UnboundLocalError, RuntimeError):
         plt.colorbar(cm.ScalarMappable(cmap=cmap), ax=ax)
     plt.show()
-    
-    
+
 
 def get_errors(image, error_type='error'):
     try:

@@ -3,24 +3,24 @@ import numpy as np
 import re
 from matplotlib import pyplot as plt
 
-# import os
-# import sys
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-# sys.path.append(parent_dir)
-# # from convenience_funcs.fits_convenience_class import Fits_Simple
-from nickelpipeline.astrometry.astrometry_api import run_astrometry
+from nickelpipeline.astrometry.astrometry_api import run_astrometry, get_astrometric_solves
 from nickelpipeline.convenience.fits_class import Fits_Simple
 from nickelpipeline.convenience.dir_nav import unzip_directories, categories_from_conditions
 
 
-def avg_plate_scale(path_list, verbose=True, fast=False):
+def avg_plate_scale(path_list, verbose=True, fast=True, api_key=None):
     
     images = unzip_directories(path_list, output_format='Path')
     
     output_dir = str(images[0].parent.parent.parent / 'astrometric')
     
-    astro_calib_images = run_astrometry(images, output_dir, resolve=fast)
+    # astro_calib_images = run_astrometry(images, output_dir, resolve=fast)
+    if fast:
+        astro_calib_images = get_astrometric_solves(images, output_dir)
+    else:
+        if api_key is None:
+            raise ValueError("api_key must be provided if parameter fast=False")
+        astro_calib_images = run_astrometry(images, api_key, output_dir)
     if verbose:
         print(astro_calib_images)
     
@@ -44,17 +44,18 @@ def avg_plate_scale(path_list, verbose=True, fast=False):
         print(f'STD for all scale measurements = {std}')
     return avg
 
-def graph_plate_scale_by_setting(path_list, condition_tuples, verbose=True, fast=False):
+def graph_plate_scale_by_setting(path_list, condition_tuples, verbose=True,
+                                 fast=True, api_key=None):
     
-    images = unzip_directories(path_list, 
-                               output_format='Fits_Simple', allow_exceptions=True)
+    images = unzip_directories(path_list, output_format='Fits_Simple',
+                               allow_exceptions=True)
 
     categories = categories_from_conditions(condition_tuples, images)
 
     data = []
     # Print out the categories and their corresponding file lists
     for category, file_list in categories.items():
-        plate_scale = avg_plate_scale(file_list, fast=fast, verbose=verbose)
+        plate_scale = avg_plate_scale(file_list, verbose, fast, api_key)
         data.append((category, plate_scale))
     
     data.sort()
