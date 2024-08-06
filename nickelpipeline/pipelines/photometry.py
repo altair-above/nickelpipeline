@@ -21,7 +21,7 @@ def photometry_all(reddir, output_dir=None, thresh=8.0, group=False, mode='all',
     Path.mkdir(unconsol_dir, exist_ok=True)
     Path.mkdir(consol_dir, exist_ok=True)
     
-    source_catalogs = []
+    source_catalog_paths = []
     for obj_dir in obj_dirs:
         if group:
             output_dir = consol_dir / obj_dir.name
@@ -42,7 +42,7 @@ def photometry_all(reddir, output_dir=None, thresh=8.0, group=False, mode='all',
                 output_file = output_dir / f'{filestem}_photsrcs.csv'
             
             all_data = aperture_analysis(psf_data, file)
-            source_catalogs.append(all_data)
             all_data.write(output_file, format='csv', overwrite=True)
+            source_catalog_paths.append(output_file)
     
-    return source_catalogs
+    return source_catalog_paths

@@ -6,28 +6,16 @@ import logging
 from nickelpipeline.convenience.log import adjust_global_logger
 from nickelpipeline.convenience.dir_nav import unzip_directories
 from nickelpipeline.final_calibration.combo_astro_photo import convert_coords_all, photometric_calib_all
+from nickelpipeline.pipelines.final_calib import final_calib_all
 
 adjust_global_logger('INFO', __name__)
 logger = logging.getLogger(__name__)
 
 
-def final_calib_all(photo_dir, astro_dir, final_calib_dir=None):
-    
-    if final_calib_dir is None:
-        final_calib_dir = astro_dir.parent.parent / 'final_calib'
-    Path.mkdir(final_calib_dir, exist_ok=True)
-    
-    astrophot_dir = convert_coords_all(photo_dir, astro_dir)
-    
-    photometric_calib_all(astrophot_dir)
-    
-    
-
-
 photo_dir = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/photometric/consolidated')
 astro_dir = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/astrometric/astroimg')
 
-# convert_coords_all(photo_dir, astro_dir, final_calib_dir = astro_dir.parent.parent / 'final_calib')
+convert_coords_all(photo_dir, astro_dir, final_calib_dir = astro_dir.parent.parent / 'final_calib')
 
 astrophot_dir = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/final_calib/astrophotsrcs_consol')
 photometric_calib_all(astrophot_dir)

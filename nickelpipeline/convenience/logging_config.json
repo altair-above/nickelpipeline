@@ -25,7 +25,7 @@
             "mode": "a",
             "encoding": "utf-8",
             "maxBytes": 1000000,
-            "backupCount": 3
+            "backupCount": 2
         }
     },
     "loggers": {
