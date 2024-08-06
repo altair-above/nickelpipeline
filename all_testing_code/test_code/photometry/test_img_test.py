@@ -2,8 +2,8 @@ from pathlib import Path
 import logging
 
 from nickelpipeline.convenience.log import adjust_global_logger
-from nickelpipeline.photometry.starfind import analyze_sources
-from nickelpipeline.photometry.test_img import make_img, check_stats
+from nickelpipeline.photometry.psf_photometry import psf_analysis
+from all_testing_code.test_code.photometry.test_img import make_img, check_stats
 
 
 adjust_global_logger('INFO', __name__)
@@ -21,7 +21,7 @@ for flux, filename in zip(fluxes, names):
 for flux, filename in zip(fluxes, names):
     test_img = Path(filename)
     try:
-        phot_datas[flux] = analyze_sources(test_img, plot=True)
+        phot_datas[flux] = psf_analysis(test_img, plot_final=True, plot_inters=True)
     except:
         logger.warning("No sources found (probably)")
         continue

@@ -32,7 +32,7 @@ class AstrometryPipeline(scriptbase.ScriptBase):
     @staticmethod
     def main(args):
         
-        from nickelpipeline.astrometry.astrometry import astrometry_all
+        from nickelpipeline.pipelines.astrometry import astrometry_all
         
         if args.very_verbose:
             args.verbosity = 5

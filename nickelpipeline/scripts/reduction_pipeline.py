@@ -38,7 +38,7 @@ class ReductionPipeline(scriptbase.ScriptBase):
     @staticmethod
     def main(args):
         
-        from nickelpipeline.reduction.reduction import reduce_all
+        from nickelpipeline.pipelines.reduction import reduce_all
         from nickelpipeline.convenience.display_fits import display_many_nickel
         
         if args.very_verbose:

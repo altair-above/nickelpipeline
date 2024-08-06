@@ -1,13 +1,10 @@
-
-
 from pathlib import Path
 import logging
 
 from nickelpipeline.photometry.psf_photometry import psf_analysis, consolidate_groups
 from nickelpipeline.photometry.aperture_photometry import aperture_analysis
-from nickelpipeline.convenience.dir_nav import unzip_directories
 
-  
+
 logger = logging.getLogger(__name__)
     
 def photometry_all(reddir, output_dir=None, thresh=8.0, group=False, mode='all',

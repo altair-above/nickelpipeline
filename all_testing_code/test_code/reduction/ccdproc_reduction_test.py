@@ -1,5 +1,5 @@
 from pathlib import Path
-from nickelpipeline.reduction.reduction import reduce_all
+from nickelpipeline.pipelines.reduction import reduce_all
 from nickelpipeline.convenience.display_fits import display_many_nickel
 from nickelpipeline.convenience.fits_class import Fits_Simple
 
