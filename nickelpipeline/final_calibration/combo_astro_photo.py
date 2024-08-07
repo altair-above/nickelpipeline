@@ -42,7 +42,7 @@ def convert_coords_all(photo_dir, astro_dir, final_calib_dir):
                 logger.warning(f"No astrometric solution found for image {key}; skipping")
         
         astrophot_datas[obj_dir.name] = result_datas
-    return astrophot_dir
+    return astrophot_datas
 
 def convert_coords(phot_data_inpath, phot_data_outpath, astrometric_img_path):
     phot_data_path = Path(phot_data_inpath)

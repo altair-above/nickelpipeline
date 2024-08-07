@@ -15,6 +15,7 @@ def final_calib_all(photo_dir, astro_dir, output_dir=None):
         ouptut_dir = astro_dir.parent.parent / 'final_calib'
     Path.mkdir(ouptut_dir, exist_ok=True)
     
-    astrophot_dir = convert_coords_all(photo_dir, astro_dir, ouptut_dir)
-    
+    astrophot_datas = convert_coords_all(photo_dir, astro_dir, ouptut_dir)
+    return astrophot_datas
+
     # photometric_calib_all(astrophot_dir)

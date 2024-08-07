@@ -41,15 +41,13 @@ def display_nickel(image: Union[str, Path, Fits_Simple]):
     """
     if not isinstance(image, Fits_Simple):
         image = Fits_Simple(image)
-    print(image)
-    print(f'Filter = {image.filtnam}')
 
     data_masked = image.masked_array
-    data_masked = np.ma.masked_array(np.delete(data_masked.data, bad_columns, axis=1),
-                                     np.delete(data_masked.mask, bad_columns, axis=1))
+    # data_masked = np.ma.masked_array(np.delete(data_masked.data, bad_columns, axis=1),
+    #                                  np.delete(data_masked.mask, bad_columns, axis=1))
     fig = plt.figure(figsize=(8, 6))
-    plt.title(image)
     ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    ax.set_title(image)
 
     interval = ZScaleInterval()
     vmin, vmax = interval.get_limits(data_masked)

@@ -231,11 +231,6 @@ NEXT BIG STEP
     |- display source circles on top of image
 |- astrometric solution
 
-******************************************************
-FIX CCD SHAPE AND FOV SHAPE USING HEADER
-can use to constrain astrometry
-******************************************************
-
 from pathlib import Path
 root = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/astrometric/astroimg')
 newfolder = Path('C:/Users/allis/Documents/2024-2025_Local/Akamai_Internship/nickelpipeline/all_testing_code/test-data-06-26-2/astrometric/corr')
@@ -269,3 +264,10 @@ for file in root.iterdir():
 plate scale & fwhm
 
 ask for ray trace spot diagram, from this should have expected fwhm?
+
+******************************************************
+FIX CCD SHAPE AND FOV SHAPE USING HEADER
+can use to constrain astrometry
+******************************************************
+
+MAKE EVERYTHING RELY ON THE TABLE OR JUST THE DATA FOLDER

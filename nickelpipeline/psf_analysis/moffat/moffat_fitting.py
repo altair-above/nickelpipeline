@@ -14,14 +14,14 @@ from nickelpipeline.convenience.nickel_data import plate_scale_approx    # For t
 logger = logging.getLogger(__name__)
 
 
-def get_source_pars(path_list, category_str=None, fittype='elliptical'):
+def get_source_pars(path_list, category_str=None, fittype='ellip'):
     """
     Extract source coordinates and Moffat fit parameters from image data.
     
     Args:
         path_list (list): List of paths (directories or files) to unzip.
         category_str (str): Category string for identifying the path to data
-        fittype (str, optional): Type of model to fit ('elliptical' or 'circular')
+        fittype (str, optional): Type of model to fit ('ellip' or 'circ')
     
     Returns:
         source_coords (ndarray): Array of source coordinates.
@@ -64,7 +64,7 @@ def get_graphable_pars(file_paths, group_name, verbose=False):
     # Define directory and base path for processed files
     proc_dir = Path('.').resolve() / "proc_files"
     Path.mkdir(proc_dir, exist_ok=True)
-    proc_subdir = proc_dir / 'elliptical'
+    proc_subdir = proc_dir / 'ellip'
     Path.mkdir(proc_subdir, exist_ok=True)
     base_parent = proc_subdir / group_name
     Path.mkdir(base_parent, exist_ok=True)
@@ -75,11 +75,11 @@ def get_graphable_pars(file_paths, group_name, verbose=False):
     
     # Fit PSF stack and get the fit results
     psf_file = Path(f'{str(base)}.psf.fits').resolve()  # PSF info stored here
-    fit = fit_psf_stack(base, 1, fittype='elliptical', ofile=psf_file)
+    fit = fit_psf_stack(base, 1, fittype='ellip', ofile=psf_file)
     
     # Plot PSF and get FWHM and phi values
     plot_file = Path(f'{str(base)}.psf.pdf').resolve()  # Plots stored here
-    psf_plot(plot_file, fit, verbose=verbose)
+    psf_plot(plot_file, fit, fittype='ellip', plot_fit=True)
     fwhm = get_param_list('fwhm', np.array([fit.par]), (1,))[0][0]
     ecc = get_param_list('ecc', np.array([fit.par]), (1,))[0][0]
     phi = get_param_list('phi', np.array([fit.par]), (1,))[0][0]

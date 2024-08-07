@@ -19,6 +19,7 @@ from scipy.spatial import KDTree
 from nickelpipeline.convenience.fits_class import Fits_Simple
 from nickelpipeline.convenience.nickel_data import bad_columns
 from nickelpipeline.convenience.log import log_astropy_table
+from nickelpipeline.convenience.graphs import plot_sources
 
 from nickelpipeline.photometry.moffat_model_photutils import MoffatElliptical2D
 from nickelpipeline.psf_analysis.moffat.stamps import generate_stamps
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 np.set_printoptions(edgeitems=100)
 
 
-def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
+def psf_analysis(image, proc_dir, thresh=10.0, mode='all', fittype='circ',
                  plot_final=True, plot_inters=False):
     
     local_bkg_range=(15,25)
@@ -55,8 +56,6 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     
     # Create output directories
     img_name = image.path.stem.split('_')[0]
-    proc_dir = Path('.').resolve() / "proc_files"
-    Path.mkdir(proc_dir, exist_ok=True)
     proc_subdir = proc_dir / fittype
     Path.mkdir(proc_subdir, exist_ok=True)
     base_parent = proc_subdir / img_name
@@ -69,19 +68,13 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     # Convert source data into Astropy table
     column_names = ['chip', 'id', 'xcentroid', 'ycentroid', 'bkg', 'kron_radius', 'raw_flux', 'flux', '?']
     sources = Table(source_data, names=column_names)
-    logger.debug(f"Sources Found (Iter 1): \n{log_astropy_table(sources)}")
+    table_str = log_astropy_table(sources)
+    logger.debug(f"Sources Found (Iter 1): \n{table_str}")
     
     # Fit PSF models and get source coordinates and parameters
     source_coords, source_fits, _ = fit_psf_single(base, 1, fittype=fittype, sigma_clip=False)
     source_pars = np.array([fit.par for fit in source_fits])
-    
-    # avg_par = np.mean(source_pars, axis=0)
-    # avg_fwhm = process_par(avg_par, 'Averaged-out', fittype=fittype)
-    
-    # brightest = np.array(sorted(source_pars, key=lambda coord: coord[2])[:5])
-    # clip_avg_par = np.mean(brightest, axis=0)
-    # clip_avg_fwhm = process_par(clip_avg_par, 'Clipped Avg', fittype=fittype)
-    
+
     try:
         psf_file = Path(f'{str(base)}.psf.fits').resolve()  # PSF info stored here
         stack_par = fit_psf_stack(base, 1, fittype=fittype, ofile=psf_file).par
@@ -94,7 +87,6 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
         clip_avg_fwhm = process_par(clip_avg_par, 'Clipped Avg', fittype=fittype)
         fit_par = clip_avg_par
         fit_fwhm = clip_avg_fwhm
-        
     
     init_phot_data = Table()
     init_phot_data.add_column(source_coords[:,0], name='x_fit')
@@ -103,9 +95,10 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
     init_phot_data.add_column(flux_integrals, name='flux_fit')
     init_phot_data.add_column(list(range(len(source_pars))), name='group_id')
     init_phot_data.add_column([1] * len(source_pars), name='group_size')
+    init_phot_data.meta['image_path'] = image.path
     
     if plot_inters:
-        plot_sources(image, init_phot_data, fit_fwhm)
+        plot_sources(init_phot_data, fit_fwhm)
 
     #----------------------------------------------------------------------
     # Attempt to improve the source detection by improving the FWHM estimate
@@ -148,19 +141,22 @@ def psf_analysis(image, thresh=10.0, mode='all', fittype='circ',
                      init_params=Table(sources['xcentroid', 'ycentroid', 'flux'],
                                        names=('x_0', 'y_0', 'flux_0')))
     phot_data.add_column(image.airmass * np.ones(len(phot_data)), name='airmass')
+    phot_data.meta['image_path'] = image.path
     
-    logger.debug(f"Sources Found (Iter 2): \n{log_astropy_table(phot_data)}")
+    table_str = log_astropy_table(phot_data)
+    logger.debug(f"Sources Found (Iter 2): \n{table_str}")
     
     if plot_inters:
         plot_groups(phot_data, source_coords, source_fits, base)
     if plot_final:
-        plot_sources(image, phot_data, fit_fwhm)
+        plot_sources(phot_data, fit_fwhm)
     
     return phot_data
 
 
 def plot_groups(phot_data, source_coords, source_fits, base):
     group_data = phot_data[phot_data['group_size'] > 1]
+    # group_data = phot_data[phot_data['group_id'] == 18]
     group_ids = list(sorted(set(group_data['group_id'])))
     for id in group_ids:
         logger.warning(f"Group {id} has multiple fitted PSF's: displaying original source")
@@ -177,8 +173,8 @@ def plot_groups(phot_data, source_coords, source_fits, base):
             logger.info(f"Multiple nearby sources that could match this group; displaying all")
         for index in matching_indices:
             matching_fit = source_fits[index]
-            plot_file = Path(f'{str(base)}_src{index}.psf.pdf').resolve()
-            psf_plot(plot_file, matching_fit, show=True, plot_fit=False)
+            plot_file = Path(f'{str(base)}_src{index+1}.psf.pdf').resolve()
+            psf_plot(plot_file, matching_fit, show=True, plot_fit=True)
         
 
 def match_coords(target, search_space, max_dist=2.0):
@@ -186,56 +182,6 @@ def match_coords(target, search_space, max_dist=2.0):
     indices = search_tree.query_ball_point(target, max_dist)
     logger.debug(f"Search found indices {indices} within {max_dist} of {target}")
     return indices
-
-
-def plot_sources(image, phot_data, given_fwhm):
-    
-    if 'flux_fit' in phot_data.colnames:
-        flux_name = 'flux_fit'
-    else:
-        flux_name = 'flux_psf'
-    
-    good_phot_data = phot_data[phot_data['group_size'] <= 1]
-    bad_phot_data = phot_data[phot_data['group_size'] > 1]
-    
-    logger.info(f'Image {image}')
-    
-    x_good = good_phot_data['x_fit']
-    y_good = good_phot_data['y_fit']
-    good_positions = np.transpose((x_good, y_good))
-    good_apertures = CircularAperture(good_positions, r=2*given_fwhm)
-    
-    x_bad = bad_phot_data['x_fit']
-    y_bad = bad_phot_data['y_fit']
-    bad_positions = np.transpose((x_bad, y_bad))
-    bad_apertures = CircularAperture(bad_positions, r=2*given_fwhm)
-    
-    interval = ZScaleInterval()
-    vmin, vmax = interval.get_limits(image.masked_array)
-    cmap = plt.get_cmap()
-    cmap.set_bad('r', alpha=0.5)
-    plt.figure(figsize=(12,10))
-    plt.title(image)
-    plt.imshow(image.masked_array, origin='lower', vmin=vmin, vmax=vmax,
-               cmap=cmap, interpolation='nearest')
-    plt.colorbar()
-    good_apertures.plot(color='purple', lw=1.5, alpha=1)
-    bad_apertures.plot(color='r', lw=1.5, alpha=0.5)
-    
-    # Annotate good sources with flux_fit values
-    for i in range(len(good_phot_data)):
-        plt.text(x_good[i], y_good[i]+17, f'{good_phot_data[flux_name][i]:.0f}', color='white', fontsize=8, ha='center', va='center')
-    
-    group_ids = set(bad_phot_data['group_id'])
-    for id in group_ids:
-        group = bad_phot_data[bad_phot_data['group_id'] == id]
-        group_x = np.mean(group['x_fit']) + 15
-        group_y = np.mean(group['y_fit'])
-        for i in range(len(group)):
-            plt.text(group_x, group_y+(i-1)*20, f'{group["group_id"][i]:.0f}:{group["iter_detected"][i]:.0f}: {group[flux_name][i]:.0f}', color='red', fontsize=8, ha='left', va='center')
-    
-    plt.gcf().set_dpi(300)
-    plt.show()
 
 
 def gamma_to_fwhm(gamma, alpha):
@@ -322,7 +268,8 @@ def consolidate_groups(phot_data, preserve=[]):
         new_data.add_row(new_row)
     
     new_data.sort('group_id')
-    logger.debug(f"Consolidated sources: \n{log_astropy_table(new_data)}")
+    table_str = log_astropy_table(new_data)
+    logger.debug(f"Consolidated sources: \n{table_str}")
     return new_data
 
 

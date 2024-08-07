@@ -1,9 +1,14 @@
 import numpy as np
+import logging
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
-import logging
 from loess.loess_2d import loess_2d
+
+from photutils.aperture import CircularAperture
+from astropy.visualization import ZScaleInterval
+
 from nickelpipeline.convenience.nickel_data import ccd_shape
+from nickelpipeline.convenience.fits_class import Fits_Simple
 
 logger = logging.getLogger(__name__)
 
@@ -72,3 +77,58 @@ def scatter_sources(data_x, data_y, data_vals, color_range, backgrd_ax=None,
     
     return ax, cmap_custom
 
+
+
+def plot_sources(phot_data, given_fwhm, image=None, flux_name='flux_fit',
+                 x_name='x_fit', y_name='y_fit', label_name='group_id',
+                 scale=1):
+    
+    if image is None:
+        image = Fits_Simple(phot_data.meta['image_path'])
+    logger.info(f'Plotting image {image}')
+    
+    if flux_name == 'flux_fit' and 'flux_fit' not in phot_data.colnames:
+        flux_name = 'flux_psf'
+    
+    def get_apertures(phot_data):
+        x = phot_data[x_name]
+        y = phot_data[y_name]
+        positions = np.transpose((x, y))
+        return CircularAperture(positions, r=2*given_fwhm*scale)
+    
+    good_phot_data = phot_data[phot_data['group_size'] <= 1]
+    bad_phot_data = phot_data[phot_data['group_size'] > 1]
+    bad_apertures = get_apertures(bad_phot_data)
+    good_apertures = get_apertures(good_phot_data)
+    
+    interval = ZScaleInterval()
+    vmin, vmax = interval.get_limits(image.masked_array)
+    cmap = plt.get_cmap()
+    cmap.set_bad('r', alpha=0.5)
+    plt.figure(figsize=(12,10))
+    plt.title(image)
+    plt.imshow(image.masked_array, origin='lower', vmin=vmin, vmax=vmax,
+               cmap=cmap, interpolation='nearest')
+    plt.colorbar()
+    good_apertures.plot(color='purple', lw=1.5*scale, alpha=1)
+    bad_apertures.plot(color='r', lw=1.5*scale, alpha=1)
+    
+    # Annotate good sources with flux_fit values
+    y_offset = 3.5*given_fwhm*scale
+    for i in range(len(good_phot_data)):
+        plt.text(good_phot_data[x_name][i], good_phot_data[y_name][i]+y_offset, 
+                 f'{good_phot_data[label_name][i]}: {good_phot_data[flux_name][i]:.0f}',
+                 color='white', fontsize=8*scale, ha='center', va='center')
+    
+    group_ids = set(bad_phot_data[label_name])
+    for id in group_ids:
+        group = bad_phot_data[bad_phot_data[label_name] == id]
+        group_x = np.mean(group[x_name])
+        group_y = np.mean(group[y_name]) + y_offset
+        for i in range(len(group)):
+            plt.text(group_x, group_y+i*20*scale, 
+                     f'{id}: {group[flux_name][i]:.0f}',
+                     color='red', fontsize=8*scale, ha='center', va='center')
+    
+    plt.gcf().set_dpi(300)
+    plt.show()

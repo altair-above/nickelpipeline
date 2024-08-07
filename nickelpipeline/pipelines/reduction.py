@@ -22,7 +22,7 @@ from nickelpipeline.convenience.nickel_masks import get_masks_from_file
 logger = logging.getLogger(__name__)
 
 
-def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_table.tbl',
+def reduce_all(rawdir=None, table_path_in=None, table_path_out=None,
                save_inters=False, excl_files=[], excl_obj_strs=[], excl_filts=[]):
     """
     Perform reduction of raw astronomical data frames (overscan subtraction,
@@ -42,6 +42,8 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out='reduction_files_
     """
     if rawdir is not None:
         rawdir = Path(rawdir)
+        if table_path_out is None:
+            table_path_out = rawdir.parent / 'files_table.tbl'
     # Organize raw files based on input directory or table
     file_df = organize_files(rawdir, table_path_in, table_path_out, excl_files, excl_obj_strs, excl_filts)
     

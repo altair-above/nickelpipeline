@@ -20,9 +20,11 @@ def photometry_all(reddir, output_dir=None, thresh=8.0, group=False, mode='all',
         output_dir = obj_dirs[0].parent.parent / 'photometric'
     unconsol_dir = output_dir / 'unconsolidated'
     consol_dir = output_dir / 'consolidated'
+    proc_dir = output_dir / "proc_files"
     Path.mkdir(output_dir, exist_ok=True)
     Path.mkdir(unconsol_dir, exist_ok=True)
     Path.mkdir(consol_dir, exist_ok=True)
+    Path.mkdir(proc_dir, exist_ok=True)
     
     source_catalog_paths = []
     for obj_dir in obj_dirs:
@@ -33,7 +35,7 @@ def photometry_all(reddir, output_dir=None, thresh=8.0, group=False, mode='all',
         Path.mkdir(output_dir, exist_ok=True)
             
         for file in obj_dir.iterdir():
-            psf_data = psf_analysis(file, thresh=thresh, mode=mode, 
+            psf_data = psf_analysis(file, proc_dir, thresh=thresh, mode=mode, 
                                     fittype=fittype, plot_final=plot_final, 
                                     plot_inters=plot_inters)
             

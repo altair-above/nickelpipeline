@@ -86,7 +86,7 @@ def graph_fwhms_by_setting(path_list, condition_tuples):
     return data
 
 def multi_date_graph_fwhms_by_setting(path_dict, condition_tuples_dict):
-    # directories_dict is of the form {'06-26': directories (list), '06-24': directories (list)}
+    # path_dict is of the form {'06-26': directories (list), '06-24': directories (list)}
     # Same for condition_tuples_dict
     data = []
     conf_intervals = []
