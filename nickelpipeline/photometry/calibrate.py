@@ -101,15 +101,15 @@ def photometric_calibration_coefficients_iterej(mag_c, mag_i, airmass, color_def
         dmag = stats.sigma_clip(np.ma.MaskedArray(mag_c - app_mag, mask=mask), sigma=rej, axis=0)
         # Update the mask
         mask = np.ma.getmaskarray(dmag)
-        # ... the good-point mask
-        _gpm = np.logical_not(mask)
         # ... determine if any new points were rejected, and break the
         # loop, if not
         if np.sum(mask) - nrej == 0:
             break
-        # ... update the number of rejections
+        # Update the good-point mask
+        _gpm = np.logical_not(mask)
+        # ... the number of rejections
         nrej = np.sum(mask)
-        # Increment
+        # ... and increment the iteration counter
         j += 1
 
     return coeff, app_mag, _gpm
