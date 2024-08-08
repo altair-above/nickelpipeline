@@ -311,7 +311,6 @@ def apply_photometric_calibration(mag, airmass, coeff, color_defs, atol=1e-2, ma
         else:
             rms = np.sqrt(np.mean((color[_gpm]-updated_color[_gpm])**2))
         color = updated_color
-        print(i, rms, atol)
         i += 1
     return app_mag
 
