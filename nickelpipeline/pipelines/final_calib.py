@@ -10,6 +10,8 @@ from nickelpipeline.final_calibration.combo_astro_photo import convert_coords_al
 logger = logging.getLogger(__name__)
 
 def final_calib_all(photo_dir, astro_dir, output_dir=None):
+    photo_dir = Path(photo_dir)
+    astro_dir = Path(astro_dir)
     
     if output_dir is None:
         ouptut_dir = astro_dir.parent.parent / 'final_calib'

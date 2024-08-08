@@ -15,17 +15,17 @@ datadir = 'test_data_example'
 rawdir = 'test_data_example/raw'
 reddir = 'test_data_example/reduced'
 
-red_files = reduce_all(rawdir=rawdir, save_inters=True)
+# red_files = reduce_all(rawdir=rawdir, save_inters=True)
 
-display_many_nickel(red_files)
+# display_many_nickel(red_files)
 
-astro_calib_files = astrometry_all(reddir, api_key)
+# astro_calib_files = astrometry_all(reddir, api_key)
 
-src_catalog_paths = photometry_all(reddir, group=False, plot_final=True,
-                                   plot_inters=False)
+src_catalog_paths = photometry_all(reddir + '/UGC_9837_V', group=True, plot_final=True,
+                                   plot_inters=False, thresh=5.0)
 
-photodir = src_catalog_paths[0].parent.parent
-astrodir = astro_calib_files[0].parent
+photodir = datadir + '/photometric/unconsolidated'#src_catalog_paths[0].parent.parent
+astrodir = datadir + '/astrometric/astroimg'#astro_calib_files[0].parent
 astrophot_data_tables = final_calib_all(photodir, astrodir)
 
 from nickelpipeline.convenience.graphs import plot_sources

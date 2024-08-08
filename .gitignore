@@ -195,3 +195,4 @@ examples/test_data_example
 *.log.2
 *.log.3
 *proc_files
+*.tbl
