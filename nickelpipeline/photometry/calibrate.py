@@ -8,13 +8,13 @@ def photometric_calibration_coefficients_iterej(mag_c, mag_i, airmass, color_def
                                                 weights=None, gpm=None, rej=3., maxiter=3):
     r"""
     Iteratively determine the photometric calibration coefficients by
-    fitting the data and then rejeting outliers.
+    fitting the data and then rejecting outliers.
 
     Procedure:
 
         - Determine the best-fitting coefficients using
           :func:`photometric_calibration_coefficients`.
-        - Use :func:`apply_photometric_calibration`to apply the
+        - Use :func:`apply_photometric_calibration` to apply the
           coefficents to the instrumental magnitudes.
         - Reject outliers; see ``rej``.
         - Repeat until either no points are rejected or the maximum
@@ -70,7 +70,6 @@ def photometric_calibration_coefficients_iterej(mag_c, mag_i, airmass, color_def
         Shape matches ``mag_i``.
 
     """
-    
     # Define the good-point mask
     _gpm = np.ones_like(mag_i.shape, dtype=bool) if gpm is None else gpm
     # ... and its inverse
@@ -286,7 +285,13 @@ def apply_photometric_calibration(mag, airmass, coeff, color_defs, atol=1e-2, ma
     app_mag : `numpy.ndarray`
         Calibrated apparent magnitudes.  Shape matches ``mag``.
 
+    Raises
+    ------
+    ValueError
+        Raised if input arrays have inappropriate/mismatching shapes.
+
     """
+    # Check the input
     if mag.shape != airmass.shape:
         raise ValueError('Shape of mag and airmass arrays must match.')
     nobs, nmag = mag.shape
@@ -295,23 +300,33 @@ def apply_photometric_calibration(mag, airmass, coeff, color_defs, atol=1e-2, ma
     if color_defs.shape != (nmag, 2):
         raise ValueError('Must define a color used by each magnitude.')
 
+    # Calculate the colors
     color = np.column_stack([-np.diff(mag[:,c], axis=1) for c in color_defs])
 
+    # Ensure all magnitudes are valid for each measurement
+    # TODO: Actually only need to make sure each color (magnitude pair) is valid...
     if gpm is not None:
         _gpm = np.all(gpm, axis=1)
 
+    # Iteratively calculate the apparent mags until the colors are as close as specified.
     rms = atol + 1.
     i = 0
     while rms > atol and i < maxiter:
+        # Calculate all the apparent mags
         app_mag = np.column_stack([apparent_mag(m, c, a, k)
                             for m, c, a, k in zip(mag.T, color.T, airmass.T, coeff)])
+        # Get the updated color
         updated_color = np.column_stack([-np.diff(app_mag[:,c], axis=1) for c in color_defs])
+        # Get the RMS difference with the old color
         if gpm is None:
             rms = np.sqrt(np.mean((color-updated_color)**2))
         else:
             rms = np.sqrt(np.mean((color[_gpm]-updated_color[_gpm])**2))
+        # Save the updated value
         color = updated_color
+        # Increment the iteration counter
         i += 1
+    # Return the apparent magnitudes
     return app_mag
 
 
