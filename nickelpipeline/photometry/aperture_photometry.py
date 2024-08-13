@@ -47,7 +47,7 @@ def aperture_analysis(phot_data, image, aper_size=8.0):
     # Copy photometric data for modifications
     all_data = phot_data.copy()
     all_data['flux_fit'].name = 'flux_psf'
-    col_index = phot_data.colnames.index('flux_psf') + 1
+    col_index = all_data.colnames.index('flux_psf') + 1
     
     # Add the flux within apertures to the photometric data
     all_data.add_column(aperstats.sum, name='flux_aper', index=col_index)

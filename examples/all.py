@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Paste your own API Key
 api_key = 'exampleapikey'
+api_key = "fknqiifdlhjliedf"
 
 # Define directory containing raw images
 rawdir = 'test_data_example/raw'

@@ -4,15 +4,12 @@ import logging
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.modeling.functional_models import Moffat2D
 from photutils.detection import IRAFStarFinder
-from photutils.aperture import CircularAperture
 from photutils.psf import IterativePSFPhotometry, make_psf_model
 from photutils.background import MMMBackground, MADStdBackgroundRMS, LocalBackground
 from photutils.psf import SourceGrouper
 
 from pathlib import Path
 from astropy.table import Table
-from matplotlib import pyplot as plt
-from astropy.visualization import ZScaleInterval
 
 from scipy.spatial import KDTree
 

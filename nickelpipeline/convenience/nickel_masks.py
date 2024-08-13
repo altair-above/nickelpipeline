@@ -13,23 +13,28 @@ parent_dir = Path(__file__).parent.resolve()
 mask_file = parent_dir / mask_file
 
 
-def get_masks_from_file(mode):
+def get_masks_from_file(mode: str) -> np.ndarray:
     """
     Load and retrieve specific masks from a .npz file based on the given mode.
 
-    Args:
-        mask_file (str): Path to the .npz file containing the masks.
-        mode (str): Specifies which mask to retrieve. Possible values are:
-            - 'mask': Returns the standard nickel mask
-            - 'fov_mask': Returns standard nickel mask w/ overscan columns
-            - 'mask_cols_only': Returns nickel mask w/ only bad columns masked
-            - 'fov_mask_cols_only': Returns nickel mask w/ overscan columns w/ only bad columns masked
+    Parameters
+    ----------
+    mode : str
+        Specifies which mask to retrieve. Possible values are:
+        - 'mask': Returns the standard nickel mask.
+        - 'fov_mask': Returns the standard nickel mask with overscan columns.
+        - 'mask_cols_only': Returns the nickel mask with only bad columns masked.
+        - 'fov_mask_cols_only': Returns the nickel mask with overscan columns and only bad columns masked.
 
-    Returns:
-        np.ndarray: The requested mask array corresponding to the specified mode.
+    Returns
+    -------
+    np.ndarray
+        The requested mask array corresponding to the specified mode.
 
-    Raises:
-        ValueError: If the mode is not one of the specified options.
+    Raises
+    ------
+    ValueError
+        If the mode is not one of the specified options.
     """
     loaded_masks = np.load(mask_file)
     
@@ -45,11 +50,23 @@ def get_masks_from_file(mode):
         raise ValueError("Invalid mode. Expected one of: 'mask', 'fov_mask', 'mask_cols_only', 'fov_mask_cols_only'.")
 
 
-def generate_masks():
+def generate_masks() -> tuple:
+    """
+    Generate and save the masks for Nickel images, including masks for bad columns, 
+    blind corners, and field of view (FOV) padding.
+
+    Returns
+    -------
+    tuple
+        A tuple containing four masks:
+        - nickel_mask_cols_only: Mask for Nickel images with only bad columns masked.
+        - nickel_mask: Mask for Nickel images with bad columns and blind corners masked.
+        - nickel_fov_mask_cols_only: Mask for Nickel images with FOV padding and only bad columns masked.
+        - nickel_fov_mask: Mask for Nickel images with FOV padding, bad columns, and blind corners masked.
+    """
     # Mask for Nickel images (masking bad columns and blind corners)
     nickel_mask_cols_only = add_mask(np.zeros(ccd_shape), bad_columns, [], []).mask
-    nickel_mask = add_mask(np.zeros(ccd_shape), bad_columns, bad_triangles,
-                           bad_rectangles).mask
+    nickel_mask = add_mask(np.zeros(ccd_shape), bad_columns, bad_triangles, bad_rectangles).mask
 
     # Calculate the padding needed
     pad_height = fov_shape[0] - ccd_shape[0]
@@ -68,24 +85,30 @@ def generate_masks():
 
 def add_mask(data: np.ndarray, cols_to_mask: list, tris_to_mask: list, rects_to_mask: list) -> ma.MaskedArray:
     """
-    Masks the triangles from the image by setting the pixel values within those triangles to zero.
+    Apply masks to an image by masking specified columns, triangles, and rectangles.
 
-    Args:
-        data (ndarray): 2D numpy array representing the image to mask.
-        cols_to_mask (list): List of column indices to mask.
-        tris_to_mask (list): List of tuples of 3 coordinates representing triangles to mask.
-        rects_to_mask (list): List of tuples of 4 coordinates representing rectangles to mask.
+    Parameters
+    ----------
+    data : np.ndarray
+        A 2D numpy array representing the image to mask.
+    cols_to_mask : list
+        A list of column indices to mask.
+    tris_to_mask : list
+        A list of tuples, where each tuple contains 3 coordinates representing a triangle to mask.
+    rects_to_mask : list
+        A list of tuples, where each tuple contains 4 coordinates representing a rectangle to mask.
 
-    Returns:
-        ndarray: The image with triangles masked.
+    Returns
+    -------
+    ma.MaskedArray
+        A masked array with the specified regions masked.
     """
     rows, cols = data.shape
     mask = np.zeros((rows, cols), dtype=bool)
     
     # Mask the rectangles
     for rectangle in rects_to_mask:
-        mask[rectangle[0][0]:rectangle[1][0],
-             rectangle[0][1]:rectangle[1][1]] = True
+        mask[rectangle[0][0]:rectangle[1][0], rectangle[0][1]:rectangle[1][1]] = True
     # Transpose mask so that correct areas are masked (FITS indexing is odd)
     mask = mask.T
 

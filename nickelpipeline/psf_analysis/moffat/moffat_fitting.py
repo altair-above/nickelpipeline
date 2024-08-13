@@ -72,7 +72,7 @@ def get_graphable_pars(file_paths, group_name, verbose=False):
     Returns
     -------
     fwhm : float
-        Average FWHM.
+        FWHM.
     ecc : float
         FWHM eccentricity.
     phi : float
@@ -111,7 +111,8 @@ def get_graphable_pars(file_paths, group_name, verbose=False):
 
 def get_param_list(param_type, pars, shape, img_nums=None):
     """
-    Generate the parameter list, color range, and title for contour plotting.
+    Generate the desired single parameter list, color range, and title
+    for contour plotting based on Moffat pars.
 
     Parameters
     ----------
@@ -139,12 +140,13 @@ def get_param_list(param_type, pars, shape, img_nums=None):
         If the input `param_type` is not 'fwhm', 'phi', 'ecc', or 'fwhm residuals'.
     """
     if param_type == 'fwhm':
-        # Calculate average FWHM (between semi-major and minor axes)
+        # Calculate FWHM (average between semi-major and minor axes)
         param_list = (FitMoffat2D.to_fwhm(pars[:, 3], pars[:, 6]) +
                       FitMoffat2D.to_fwhm(pars[:, 4], pars[:, 6])) / 2 * plate_scale_approx
         color_range = [1.5, 2.7]  # Optimized for Nickel 06-26-24 data
         title = "FWHM (arcsec)"
     elif param_type == 'fwhm residuals':
+        # Calculate FWHM residual (relative to minimum FWHM in image)
         fwhm_list = (FitMoffat2D.to_fwhm(pars[:, 3], pars[:, 6]) +
                      FitMoffat2D.to_fwhm(pars[:, 4], pars[:, 6])) / 2
         mins = {img_num: np.min(fwhm_list[img_nums == img_num])
@@ -154,7 +156,7 @@ def get_param_list(param_type, pars, shape, img_nums=None):
         color_range = [0.0, 0.36]
         title = "FWHM Residuals (arcsec)"
     elif param_type == 'phi':
-        # Convert phi rotation angle from messy original phi
+        # Convert phi rotation angle relative to x-axis from the original phi
         param_list = np.array([FitEllipticalMoffat2D.get_nice_phi(smooth_par)
                                for smooth_par in pars])
         color_range = [-45., 45.]

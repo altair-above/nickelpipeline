@@ -13,10 +13,12 @@ from nickelpipeline.convenience.nickel_data import bad_columns
 
 def print_fits_info(image_path: str):
     """
-    Prints HDU List info, HDU header, and displays the data.
+    Print HDU List information and display the FITS image data.
 
-    Args:
-        image_path (str): Path to the FITS image (greyscale only).
+    Parameters
+    ----------
+    image_path : str
+        Path to the FITS image (greyscale only).
     """
     with fits.open(image_path) as hdul:
         print("\nHDU Header")
@@ -33,18 +35,18 @@ def print_fits_info(image_path: str):
 
 def display_nickel(image: Union[str, Path, Fits_Simple]):
     """
-    Displays the data of a fits image (in path or Fits_Simple format) after
-    removing columns corresponding to the old Nickel science camera's bad columns.
+    Display the data of a FITS image using zscale coloring, with masked
+    pixels colored red.
 
-    Args:
-        image (Union[str, Path, Fits_Simple]): The Fits_Simple object or path to the FITS image.
+    Parameters
+    ----------
+    image : Union[str, Path, Fits_Simple]
+        The Fits_Simple object or path to the FITS image.
     """
     if not isinstance(image, Fits_Simple):
         image = Fits_Simple(image)
 
     data_masked = image.masked_array
-    # data_masked = np.ma.masked_array(np.delete(data_masked.data, bad_columns, axis=1),
-    #                                  np.delete(data_masked.mask, bad_columns, axis=1))
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
     ax.set_title(image)
@@ -59,10 +61,12 @@ def display_nickel(image: Union[str, Path, Fits_Simple]):
    
 def display_many_nickel(path_list):
     """
-    Displays the data of all images in a list of directories or files.
+    Display the data of all images in a list of directories or files.
 
-    Args:
-        image (Union[str, Fits_Simple]): The Fits_Simple object or path to the FITS image.
+    Parameters
+    ----------
+    path_list : list of str
+        A list of directory or file paths containing FITS images.
     """
     images = unzip_directories(path_list, output_format='Fits_Simple')
     for image in images:
