@@ -26,19 +26,29 @@ def reduce_all(rawdir=None, table_path_in=None, table_path_out=None,
                save_inters=False, excl_files=[], excl_obj_strs=[], excl_filts=[]):
     """
     Perform reduction of raw astronomical data frames (overscan subtraction,
-    bias subtraction, flat division, cosmic ray masking)
+    bias subtraction, flat division, cosmic ray masking).
 
-    Args:
-        rawdir (str or Path): Directory containing raw FITS files if no table_path_in.
-        table_path_in (str): Path to input table file with raw FITS file information.
-        table_path_out (str): Path to output table file for storing the raw FITS file information.
-        save_inters (bool): If True, save intermediate results during processing.
-        excl_files (list): List of file stems to exclude (exact match not necessary).
-        excl_obj_strs (list): List of object strings to exclude (exact match not necessary).
-        excl_filts (list): List of filter names to exclude.
+    Parameters
+    ----------
+    rawdir : str or Path, optional
+        Directory containing raw FITS files if no table_path_in is provided.
+    table_path_in : str, optional
+        Path to input table file with raw FITS file information.
+    table_path_out : str, optional
+        Path to output table file for storing the raw FITS file information.
+    save_inters : bool, optional
+        If True, save intermediate results during processing.
+    excl_files : list, optional
+        List of file stems to exclude (exact match not necessary).
+    excl_obj_strs : list, optional
+        List of object strings to exclude (exact match not necessary).
+    excl_filts : list, optional
+        List of filter names to exclude.
 
-    Returns:
-        list: Paths to the saved reduced images.
+    Returns
+    -------
+    list
+        Paths to the saved reduced images.
     """
     if rawdir is not None:
         rawdir = Path(rawdir)
@@ -116,18 +126,27 @@ def organize_files(rawdir, table_path_in, table_path_out,
                    excl_files, excl_obj_strs, excl_filts):
     """
     Organize files by extracting metadata and applying exclusions. Saves information
-    to / draws information from a table file, and comments out files to be excluded.
+    to or draws information from a table file, and comments out files to be excluded.
 
-    Args:
-        rawdir (str or None): Directory to scan for raw FITS files.
-        table_path_in (str or None): Path to input table file with raw FITS file information.
-        table_path_out (str): Path to output table file for storing the raw FITS file information.
-        excl_files (list): List of file stems to exclude (exact match not necessary).
-        excl_obj_strs (list): List of object strings to exclude (exact match not necessary).
-        excl_filts (list): List of filter names to exclude.
+    Parameters
+    ----------
+    rawdir : str or None
+        Directory to scan for raw FITS files.
+    table_path_in : str or None
+        Path to input table file with raw FITS file information.
+    table_path_out : str
+        Path to output table file for storing the raw FITS file information.
+    excl_files : list
+        List of file stems to exclude (exact match not necessary).
+    excl_obj_strs : list
+        List of object strings to exclude (exact match not necessary).
+    excl_filts : list
+        List of filter names to exclude.
 
-    Returns:
-        pd.DataFrame: DataFrame containing organized file information.
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing organized file information.
     """
     table_path_out = Path(table_path_out)
     if table_path_in is not None:
@@ -218,13 +237,19 @@ def comment_out_rows(excluded_file_names, table_file, modify=True):
     """
     Comment out specified rows in a table file based on exclusion criteria.
 
-    Args:
-        excluded_file_names (list): List of file names to comment out.
-        table_file (str): Path to the table file to modify.
-        modify (bool): Whether to modify the file or not.
+    Parameters
+    ----------
+    excluded_file_names : list
+        List of file names to comment out.
+    table_file : str
+        Path to the table file to modify.
+    modify : bool, optional
+        Whether to modify the file or not.
 
-    Returns:
-        list: List of file names that were already commented out.
+    Returns
+    -------
+    list
+        List of file names that were already commented out.
     """
     with open(table_file, 'r') as f:
         lines = f.readlines()
@@ -251,11 +276,15 @@ def init_ccddata(frame):
     """
     Initialize a CCDData object from a FITS file and remove cosmic rays.
 
-    Args:
-        frame (str or Path): Path to the FITS file.
+    Parameters
+    ----------
+    frame : str or Path
+        Path to the FITS file.
 
-    Returns:
-        CCDData: Initialized and processed CCDData object.
+    Returns
+    -------
+    CCDData
+        Initialized and processed CCDData object.
     """
     ccd = CCDData.read(frame, unit=u.adu)
     ccd.mask = get_masks_from_file('fov_mask')
@@ -273,11 +302,15 @@ def trim_overscan(ccd):
     """
     Subtract overscan and trim the overscan region from the image.
 
-    Args:
-        ccd (CCDData): CCDData object to process.
+    Parameters
+    ----------
+    ccd : CCDData
+        CCDData object to process.
 
-    Returns:
-        CCDData: Processed CCDData object with overscan subtracted and image trimmed.
+    Returns
+    -------
+    CCDData
+        Processed CCDData object with overscan subtracted and image trimmed.
     """
     def nickel_oscansec(hdr):
         nc = hdr['NAXIS1']
@@ -293,12 +326,17 @@ def stack_frames(raw_frames, frame_type):
     """
     Stack frames by trimming overscan and combining them with sigma clipping.
 
-    Args:
-        raw_frames (list): List of CCDData objects to combine.
-        frame_type (str): Type of frames (e.g., 'flat').
+    Parameters
+    ----------
+    raw_frames : list
+        List of CCDData objects to combine.
+    frame_type : str
+        Type of frames (e.g., 'flat').
 
-    Returns:
-        CCDData: Combined CCDData object.
+    Returns
+    -------
+    CCDData
+        Combined CCDData object.
     """
     trimmed_frames = [trim_overscan(frame) for frame in raw_frames]
     combiner = ccdproc.Combiner(trimmed_frames)
@@ -320,13 +358,19 @@ def get_master_bias(file_df, save=True, save_dir=None):
     """
     Create a master bias frame from individual bias frames.
 
-    Args:
-        file_df (pd.DataFrame): DataFrame containing file information.
-        save (bool): If True, save the master bias frame to disk.
-        save_dir (Path or None): Directory to save the master bias frame.
+    Parameters
+    ----------
+    file_df : pd.DataFrame
+        DataFrame containing file information.
+    save : bool, optional
+        If True, save the master bias frame to disk.
+    save_dir : Path or None, optional
+        Directory to save the master bias frame.
 
-    Returns:
-        CCDData: Master bias CCDData object.
+    Returns
+    -------
+    CCDData
+        Master bias CCDData object.
     """
     logger.info("Combining bias files into master bias")
     bias_df = file_df.copy()[file_df.objects == bias_label]
@@ -345,13 +389,19 @@ def get_master_flats(file_df, save=True, save_dir=None):
     """
     Create master flat frames (one per filter) from individual flat frames.
 
-    Args:
-        file_df (pd.DataFrame): DataFrame containing file information.
-        save (bool): If True, save the master flat frames to disk.
-        save_dir (Path or None): Directory to save the master flat frames.
+    Parameters
+    ----------
+    file_df : pd.DataFrame
+        DataFrame containing file information.
+    save : bool, optional
+        If True, save the master flat frames to disk.
+    save_dir : Path or None, optional
+        Directory to save the master flat frames.
 
-    Returns:
-        dict: Dictionary of master flat CCDData objects keyed by filter.
+    Returns
+    -------
+    dict
+        Dictionary of master flat CCDData objects keyed by filter.
     """
     logger.info("Combining flat files into master flat")
     
@@ -386,13 +436,19 @@ def save_results(scifile_df, modifier_str, save_dir):
     """
     Save (partially) processed science files to the specified directory.
 
-    Args:
-        scifile_df (pd.DataFrame): DataFrame containing processed science file information.
-        modifier_str (str): String to append to filenames to indicate processing stage.
-        save_dir (Path): Directory to save the processed files.
+    Parameters
+    ----------
+    scifile_df : pd.DataFrame
+        DataFrame containing processed science file information.
+    modifier_str : str
+        String to append to filenames to indicate processing stage.
+    save_dir : Path
+        Directory to save the processed files.
 
-    Returns:
-        list: List of paths to the saved files.
+    Returns
+    -------
+    list
+        List of paths to the saved files.
     """
     Path.mkdir(save_dir, exist_ok=True)
     logger.info(f"Saving {len(scifile_df.files)} _{modifier_str} images {save_dir.name} images to {save_dir}")
@@ -406,11 +462,15 @@ def norm_str(s):
     Normalize a string for comparison purposes--all caps, no spaces.
     'Sky flat' -> 'SKYFLAT'
 
-    Args:
-        s (str or list): String or list of strings to normalize.
+    Parameters
+    ----------
+    s : str or list
+        String or list of strings to normalize.
 
-    Returns:
-        str or list: Normalized string or list of normalized strings.
+    Returns
+    -------
+    str or list
+        Normalized string or list of normalized strings.
     """
     if isinstance(s, list):
         return [norm_str(elem) for elem in s]
@@ -420,11 +480,15 @@ def create_exclusion_func(exclude_list):
     """
     Create a function to determine if a file should be excluded based on a list of criteria.
 
-    Args:
-        exclude_list (list): List of criteria for exclusion.
+    Parameters
+    ----------
+    exclude_list : list
+        List of criteria for exclusion.
 
-    Returns:
-        function: Function that takes a target (string) and returns True if it should be excluded.
+    Returns
+    -------
+    function
+        Function that takes a target (string) and returns True if it should be excluded.
     """
     if exclude_list is None:
         return lambda _: True
