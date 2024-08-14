@@ -25,52 +25,52 @@ pipelines attempt to access the same file concurrently.
 
 
 Using the Command-Line Script
----------------------------
+-----------------------------
 
 For command-line usage, you can run the `nickelpipeline_astrometry`
 script, which provides flexible options for obtaining an astrometric solution.
 
 **Basic Use**
 
-   To execute the script, use the following command:
+To execute the script, use the following command:
 
-   .. code::
+.. code::
 
-      nickelpipeline_astrometry <reddir> <apikey> [options]
+   nickelpipeline_astrometry <reddir> <apikey> [options]
 
-   Replace `<reddir>` with the path to your directory of reduced images and 
-   `<apikey>` with your astrometry.net API key. 
-   
-   You can also specify optional arguments such as `--output_dir`, 
-   `--output_type`, `--resolve`, `--very_verbose`, and `--verbosity` 
-   to customize the script’s behavior.
+Replace `<reddir>` with the path to your directory of reduced images and 
+`<apikey>` with your astrometry.net API key. 
+
+You can also specify optional arguments such as `--output_dir`, 
+`--output_type`, `--resolve`, `--very_verbose`, and `--verbosity` 
+to customize the script’s behavior.
 
 **Using Optional Arguments**
 
-    - `-out` or `--output_dir` (str, optional)
-    : Path to the directory where the calibrated images will be saved. If not 
-    specified, the default is `/astrometric/` in the same directory as `reddir`.
+- `-out` or `--output_dir` (str, optional)
+  Path to the directory where the calibrated images will be saved. If not 
+  specified, the default is `/astrometric/` in the same directory as `reddir`.
 
-    - `-t` or `--output_type` (str, optional)
-    : Defines whether to return paths to the calibrated image or a source table.
-    Options are `image` (default) or `corr`.
+- `-t` or `--output_type` (str, optional)
+  Defines whether to return paths to the calibrated image or a source table.
+  Options are `image` (default) or `corr`.
 
-    - `-r` or `--resolve` (flag, optional)
-    : If specified, re-solves images with previously generated local solves.
+- `-r` or `--resolve` (flag, optional)
+  If specified, re-solves images with previously generated local solves.
 
-    - `-vv` or `--very_verbose` (flag, optional)
-    : Enables the most detailed logging. Overrides verbosity settings provided
-    via `--verbosity`.
+- `-vv` or `--very_verbose` (flag, optional)
+  Enables the most detailed logging. Overrides verbosity settings provided
+  via `--verbosity`.
 
-    - `--verbosity` (int, optional)
-    : Sets the level of verbosity for logging. Acceptable values are 1 (CRITICAL),
-    2 (ERROR), 3 (WARNING), 4 (INFO, default), and 5 (DEBUG). Overrides `--verbose`.
+- `--verbosity` (int, optional)
+  Sets the level of verbosity for logging. Acceptable values are 1 (CRITICAL),
+  2 (ERROR), 3 (WARNING), 4 (INFO, default), and 5 (DEBUG). Overrides `--verbose`.
 
-    For example:
+For example:
 
-    .. code::
+.. code::
 
-      nickelpipeline_astrometry '/path/to/reduced/images your_api_key' -out /path/to/output -t corr
+   nickelpipeline_astrometry '/path/to/reduced/images your_api_key' -out /path/to/output -t corr
 
 
 

@@ -33,67 +33,67 @@ script, which provides flexible options for performing reduction.
 
 **Basic Use**
 
-   To execute the script, use the following command:
+To execute the script, use the following command:
 
-   .. code::
+.. code::
 
-      nickelpipeline_reduction <rawdir> [options]
+  nickelpipeline_reduction <rawdir> [options]
 
-   Replace `<rawdir>` with the path to your directory of raw images.
+Replace `<rawdir>` with the path to your directory of raw images.
 
-   Once you have run this script the first time, an ASCII Astropy table of
-   all files in `rawdir` will be saved for reference. You can provide
-   the path to this table instead of the raw directory, and can even 'comment
-   out' files to be ignored.
+Once you have run this script the first time, an ASCII Astropy table of
+all files in `rawdir` will be saved for reference. You can provide
+the path to this table instead of the raw directory, and can even 'comment
+out' files to be ignored.
 
-   .. code::
+.. code::
 
-      nickelpipeline_reduction <table_path_in> [options]
+  nickelpipeline_reduction <table_path_in> [options]
 
-    Replace `<table_path_in>` with the path to this ASCII Astropy table.
+Replace `<table_path_in>` with the path to this ASCII Astropy table.
 
 **Using Optional Arguments**
 
-    The script accepts the following command-line arguments:
+The script accepts the following command-line arguments:
 
-    - `-dir` or `--rawdir` (str, optional):
-      Directory containing raw files to reduce.
+- `-dir` or `--rawdir` (str, optional):
+  Directory containing raw files to reduce.
 
-    - `-fin` or `--table_path_in` (str, optional):
-      Path to an input table file with raw FITS file information.
+- `-fin` or `--table_path_in` (str, optional):
+  Path to an input table file with raw FITS file information.
 
-    - `-fout` or `--table_path_out` (str, default='reduction_files_table.tbl'):
-      Path to the output table file for storing raw FITS file information.
+- `-fout` or `--table_path_out` (str, default='reduction_files_table.tbl'):
+  Path to the output table file for storing raw FITS file information.
 
-    - `-s` or `--save_inters` (bool, default=False):
-      If `True`, save intermediate results during processing.
+- `-s` or `--save_inters` (bool, default=False):
+  If `True`, save intermediate results during processing.
 
-    - `--excl_files` (list, optional):
-      List of file stem substrings to exclude (exact match not necessary).
+- `--excl_files` (list, optional):
+  List of file stem substrings to exclude (exact match not necessary).
 
-    - `--excl_obj_strs` (list, optional):
-      List of object substrings to exclude (exact match not necessary).
+- `--excl_obj_strs` (list, optional):
+  List of object substrings to exclude (exact match not necessary).
 
-    - `--excl_filts` (list, optional):
-      List of filter substrings to exclude (exact match not necessary).
+- `--excl_filts` (list, optional):
+  List of filter substrings to exclude (exact match not necessary).
 
-    - `-d` or `--display` (flag, optional):
-      Display the reduced images.
+- `-d` or `--display` (flag, optional):
+  Display the reduced images.
 
-    - `-vv` or `--very_verbose` (flag, optional):
-      Enable the most detailed logging. This option overrides `--verbosity`.
+- `-vv` or `--very_verbose` (flag, optional):
+  Enable the most detailed logging. This option overrides `--verbosity`.
 
-    - `--verbosity` (int, default=4):
-      Set the verbosity level for logging (1=CRITICAL, 5=DEBUG).
+- `--verbosity` (int, default=4):
+  Set the verbosity level for logging (1=CRITICAL, 5=DEBUG).
 
 
-   For example:
+For example:
 
-   .. code::
+.. code::
 
-      nickelpipeline_reduction --rawdir 'path/to/data/raw/' --save_inters True --excl_files d1113 --excl_filts B --display
+  nickelpipeline_reduction --rawdir 'path/to/data/raw/' --save_inters True --excl_files d1113 --excl_filts B --display
 
-   This command processes the raw files in the specified directory, saves intermediate files, excludes certain files, and displays the reduced images.
+This command processes the raw files in the specified directory, saves intermediate files, excludes certain files, and displays the reduced images.
 
 
 

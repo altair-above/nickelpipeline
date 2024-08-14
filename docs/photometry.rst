@@ -27,48 +27,48 @@ script, which provides flexible options for executing photometric analysis.
 
 **Basic Use**
 
-   To execute the script, use the following command:
+To execute the script, use the following command:
 
-   .. code::
+.. code::
 
-      nickelpipeline_photometry <reddir> [options]
+   nickelpipeline_photometry <reddir> [options]
 
-   Replace `<reddir>` with the path to your directory of reduced images.
+Replace `<reddir>` with the path to your directory of reduced images.
 
 **Using Optional Arguments**
 
-    - `-out` or `--output_dir` (str, optional)
-      Path to the directory where the results will be saved. If not 
-      specified, the default is `/photometric/` in the same directory as `reddir`.
+- `-out` or `--output_dir` (str, optional)
+  Path to the directory where the results will be saved. If not 
+  specified, the default is `/photometric/` in the same directory as `reddir`.
 
-    - `-t` or `--thresh` (float, optional)
-      Threshold for source detection. The default is 8.0.
+- `-t` or `--thresh` (float, optional)
+  Threshold for source detection. The default is 8.0.
 
-    - `-g` or `--group` (flag, optional)
-      Consolidates groups of sources detected together into one source.
+- `-g` or `--group` (flag, optional)
+  Consolidates groups of sources detected together into one source.
 
-    - `-f` or `--fittype` (str, optional)
-      Type of Moffat fit to use. Options are 'circ' (default) or 'ellip'.
+- `-f` or `--fittype` (str, optional)
+  Type of Moffat fit to use. Options are 'circ' (default) or 'ellip'.
 
-    - `-pf` or `--plot_final` (flag, optional)
-      Displays images with sources and fluxes labeled.
+- `-pf` or `--plot_final` (flag, optional)
+  Displays images with sources and fluxes labeled.
 
-    - `-pi` or `--plot_inters` (flag, optional)
-      Displays images with initial sources and source groups to determine
-      by inspection which groups are valid.
+- `-pi` or `--plot_inters` (flag, optional)
+  Displays images with initial sources and source groups to determine
+  by inspection which groups are valid.
 
-    - `-vv` or `--very_verbose` (flag, optional)
-      Enables the most detailed logging. Overrides verbosity settings provided via `--verbosity`.
+- `-vv` or `--very_verbose` (flag, optional)
+  Enables the most detailed logging. Overrides verbosity settings provided via `--verbosity`.
 
-    - `--verbosity` (int, optional)
-      Sets the level of verbosity for logging. Acceptable values are 1 (CRITICAL),
-      2 (ERROR), 3 (WARNING), 4 (INFO, default), and 5 (DEBUG). Overrides `--verbose`.
+- `--verbosity` (int, optional)
+  Sets the level of verbosity for logging. Acceptable values are 1 (CRITICAL),
+  2 (ERROR), 3 (WARNING), 4 (INFO, default), and 5 (DEBUG). Overrides `--verbose`.
 
-   For example:
+For example:
 
-   .. code::
+.. code::
 
-      nickelpipeline_photometry 'path/to/reduced/images' -out /path/to/output -t 10.0 -g -f ellip -pf -pi
+   nickelpipeline_photometry 'path/to/reduced/images' -out /path/to/output -t 10.0 -g -f ellip -pf -pi
 
 
 Using the Photometry Function
