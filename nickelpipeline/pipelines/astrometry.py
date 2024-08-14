@@ -27,11 +27,13 @@ def astrometry_all(reddir, api_key, output_dir=None, mode='image', resolve=False
     Returns:
         list: list of relative paths (str) to all calibrated fits images
     """
+    logger.info(f'---- astrometry_all() called on directory {reddir}')
     reddir = Path(reddir)
     red_files = unzip_directories([reddir], output_format='Path')
     if output_dir is None:
         output_dir = red_files[0].parent.parent.parent / 'astrometric'
-        
+    
+    logger.info('---- astrometry_all() call ended')
     return run_astrometry(red_files, api_key, output_dir, mode, resolve)
     
     
@@ -49,7 +51,6 @@ def run_astrometry(image_paths, api_key, output_dir, mode='image', resolve=False
     Returns:
         list: list of relative paths (str) to all calibrated fits images
     """
-    logger.info(f"---- calling run_astrometry()")
     if not isinstance(image_paths, list):
         image_paths = [Path(image_paths)]
     else:
@@ -205,7 +206,6 @@ def run_astrometry(image_paths, api_key, output_dir, mode='image', resolve=False
                 logger.warning(f"***Connection Error encountered; skipping image {image_path.name} & waiting 15 sec***")
                 time.sleep(15)
         # os.remove(image_path)
-    logger.info("---- run_astrometry() call ended")
     return calibrated_fits_paths
 
 

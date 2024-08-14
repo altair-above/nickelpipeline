@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 api_key = 'exampleapikey'
 
 # Define directory containing raw images
-rawdir = 'test_data_example/raw'
+rawdir = 'data_example/raw'
 
 # Basic reduction
 red_files = reduce_all(rawdir=rawdir, save_inters=True)

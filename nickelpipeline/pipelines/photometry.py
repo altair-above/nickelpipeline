@@ -58,9 +58,7 @@ def photometry_all(reddir, output_dir=None, thresh=8.0, group=False, mode='all',
         A list of file paths to the generated source catalogs (in CSV format).
         Each entry corresponds to an analyzed image file.
     """
-
-    # Log the start of the image extraction process
-    logger.debug(f"Extracting images from {reddir}")
+    logger.info(f'---- photometry_all() called on directory {reddir}')
     
     # Convert reddir to a Path object and get all object directories
     reddir = Path(reddir)
@@ -117,5 +115,6 @@ def photometry_all(reddir, output_dir=None, thresh=8.0, group=False, mode='all',
             all_data.write(output_file, format='csv', overwrite=True)
             source_catalog_paths.append(output_file)
     
+    logger.info('---- photometry_all() call ended')
     # Return the list of paths to the source catalogs
     return source_catalog_paths
