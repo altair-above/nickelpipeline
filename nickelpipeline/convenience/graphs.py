@@ -203,7 +203,7 @@ def plot_sources(phot_data, given_fwhm, image=None, flux_name='flux_fit',
     cmap.set_bad('r', alpha=0.5)
     
     # Plot the image and the good/bad sources
-    plt.figure()
+    plt.figure(figsize=(12,10))
     plt.title(image)
     plt.imshow(image.masked_array, origin='lower', vmin=vmin, vmax=vmax,
                cmap=cmap, interpolation='nearest')
