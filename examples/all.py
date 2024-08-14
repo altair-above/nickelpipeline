@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 # Paste your own API Key
 api_key = 'exampleapikey'
-api_key = "fknqiifdlhjliedf"
 
 # Define directory containing raw images
 rawdir = 'test_data_example/raw'
@@ -25,7 +24,7 @@ astro_calib_files = astrometry_all(reddir, api_key)
 
 # Photometric calibration
 src_catalog_paths = photometry_all(reddir, group=True, plot_final=True,
-                                   plot_inters=False, thresh=5.0)
+                                   plot_inters=False)
 
 # Final calibration (convert pixel coordinates -> RA/Dec)
 photodir = src_catalog_paths[0].parent.parent
